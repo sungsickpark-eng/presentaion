@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>배불뚝이코딩 발표자료 아카이브</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Gowun+Dodum&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f4efe7;
+    --paper: rgba(255, 252, 247, 0.82);
+    --ink: #182028;
+    --muted: #5f6b76;
+    --line: rgba(24, 32, 40, 0.12);
+    --accent: #ff6f3c;
+    --accent-deep: #dd4d1e;
+    --mint: #b8f2d6;
+    --sky: #82d7ff;
+    --sun: #ffd56a;
+    --shadow: 0 24px 70px rgba(24, 32, 40, 0.12);
+    --radius-xl: 28px;
+    --radius-lg: 22px;
+    --radius-md: 16px;
+    --display: 'Black Han Sans', sans-serif;
+    --body: 'Gowun Dodum', sans-serif;
+    --mono: 'JetBrains Mono', monospace;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    min-height: 100vh;
+    background:
+      radial-gradient(circle at top left, rgba(255, 213, 106, 0.75), transparent 28%),
+      radial-gradient(circle at top right, rgba(130, 215, 255, 0.55), transparent 26%),
+      linear-gradient(180deg, #fff8ec 0%, var(--bg) 100%);
+    color: var(--ink);
+    font-family: var(--body);
+    line-height: 1.6;
+  }
+
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(24, 32, 40, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(24, 32, 40, 0.03) 1px, transparent 1px);
+    background-size: 34px 34px;
+    pointer-events: none;
+    mask-image: radial-gradient(circle at center, black 56%, transparent 100%);
+  }
+
+  .page {
+    position: relative;
+    width: min(1180px, calc(100vw - 32px));
+    margin: 0 auto;
+    padding: 24px 0 56px;
+  }
+
+  .hero {
+    position: relative;
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: minmax(0, 1.3fr) minmax(280px, 0.9fr);
+    gap: 24px;
+    align-items: stretch;
+    margin-top: 18px;
+    padding: 34px;
+    border: 1px solid rgba(255, 255, 255, 0.55);
+    border-radius: 36px;
+    background: linear-gradient(135deg, rgba(255, 251, 245, 0.92), rgba(255, 244, 223, 0.86));
+    box-shadow: var(--shadow);
+    backdrop-filter: blur(12px);
+  }
+
+  .hero::after {
+    content: "";
+    position: absolute;
+    z-index: 0;
+    right: -80px;
+    top: -80px;
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    background: rgba(255, 111, 60, 0.14);
+    filter: blur(6px);
+  }
+
+  .hero > div:first-child {
+    position: relative;
+    z-index: 1;
+  }
+
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    border-radius: 999px;
+    background: rgba(255, 111, 60, 0.1);
+    color: var(--accent-deep);
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .hero h1 {
+    margin-top: 20px;
+    font-family: var(--display);
+    font-size: clamp(2.6rem, 5vw, 4.8rem);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+  }
+
+  .hero h1 span {
+    color: var(--accent);
+  }
+
+  .hero p {
+    max-width: 56ch;
+    margin-top: 18px;
+    font-size: clamp(1rem, 1.8vw, 1.18rem);
+    color: var(--muted);
+  }
+
+  .hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 24px;
+  }
+
+  .hero-actions a,
+  .hero-actions button {
+    appearance: none;
+    border: none;
+    border-radius: 999px;
+    padding: 13px 18px;
+    font: inherit;
+    text-decoration: none;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  }
+
+  .hero-actions a:hover,
+  .hero-actions button:hover,
+  .hero-actions a:focus-visible,
+  .hero-actions button:focus-visible,
+  .card-link:hover,
+  .card-link:focus-visible,
+  .filter-chip:hover,
+  .filter-chip:focus-visible {
+    transform: translateY(-2px);
+  }
+
+  .hero-actions .primary {
+    background: var(--accent);
+    color: #fffaf4;
+    box-shadow: 0 12px 30px rgba(221, 77, 30, 0.24);
+  }
+
+  .hero-actions .secondary {
+    background: rgba(255, 255, 255, 0.7);
+    color: var(--ink);
+    border: 1px solid rgba(24, 32, 40, 0.08);
+  }
+
+  .hero-panel {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+    align-content: start;
+  }
+
+  .stat-card,
+  .memo-card,
+  .add-card {
+    border-radius: var(--radius-lg);
+    background: var(--paper);
+    border: 1px solid rgba(255, 255, 255, 0.65);
+    box-shadow: 0 12px 34px rgba(24, 32, 40, 0.08);
+  }
+
+  .stat-card {
+    padding: 18px;
+  }
+
+  .stat-card strong {
+    display: block;
+    font-family: var(--display);
+    font-size: clamp(1.6rem, 3vw, 2.3rem);
+    color: var(--accent-deep);
+  }
+
+  .stat-card span,
+  .memo-card p,
+  .add-card li {
+    color: var(--muted);
+    font-size: 0.96rem;
+  }
+
+  .memo-card,
+  .add-card {
+    grid-column: 1 / -1;
+    padding: 20px;
+  }
+
+  .memo-card h2,
+  .section-head h2,
+  .add-card h2 {
+    font-family: var(--display);
+    letter-spacing: -0.01em;
+  }
+
+  .memo-card h2,
+  .add-card h2 {
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+  }
+
+  .add-card ol {
+    padding-left: 20px;
+  }
+
+  .library {
+    margin-top: 26px;
+    padding: 30px;
+    border-radius: 34px;
+    background: rgba(255, 255, 255, 0.62);
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    box-shadow: var(--shadow);
+    backdrop-filter: blur(10px);
+  }
+
+  .section-head {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 16px;
+    align-items: end;
+  }
+
+  .section-head h2 {
+    font-size: clamp(1.8rem, 3vw, 2.6rem);
+  }
+
+  .section-head p {
+    color: var(--muted);
+    max-width: 48ch;
+  }
+
+  .filter-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 20px;
+  }
+
+  .filter-chip {
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.85);
+    color: var(--ink);
+    padding: 10px 14px;
+    font: inherit;
+    cursor: pointer;
+    transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+  }
+
+  .filter-chip.active {
+    border-color: transparent;
+    background: linear-gradient(135deg, var(--accent), #ff9168);
+    color: #fffaf4;
+  }
+
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 18px;
+    margin-top: 24px;
+  }
+
+  .card {
+    position: relative;
+    overflow: hidden;
+    min-height: 320px;
+    padding: 22px;
+    border-radius: var(--radius-xl);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(251, 243, 233, 0.94));
+    border: 1px solid rgba(24, 32, 40, 0.08);
+    box-shadow: 0 18px 48px rgba(24, 32, 40, 0.08);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    isolation: isolate;
+  }
+
+  .card::before,
+  .card::after {
+    content: "";
+    position: absolute;
+    border-radius: 50%;
+    z-index: -1;
+  }
+
+  .card::before {
+    width: 150px;
+    height: 150px;
+    right: -48px;
+    top: -40px;
+    background: rgba(130, 215, 255, 0.28);
+  }
+
+  .card::after {
+    width: 120px;
+    height: 120px;
+    left: -36px;
+    bottom: -44px;
+    background: rgba(184, 242, 214, 0.34);
+  }
+
+  .card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    gap: 12px;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 999px;
+    background: rgba(24, 32, 40, 0.06);
+    font-family: var(--mono);
+    font-size: 0.76rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .order {
+    font-family: var(--display);
+    font-size: 2rem;
+    color: rgba(24, 32, 40, 0.2);
+  }
+
+  .card h3 {
+    margin-top: 22px;
+    font-family: var(--display);
+    font-size: 1.65rem;
+    line-height: 1.18;
+    letter-spacing: -0.02em;
+  }
+
+  .card p {
+    margin-top: 12px;
+    color: var(--muted);
+  }
+
+  .tag-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 18px;
+  }
+
+  .tag {
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.82);
+    border: 1px solid rgba(24, 32, 40, 0.08);
+    font-size: 0.88rem;
+    color: var(--ink);
+  }
+
+  .card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 24px;
+  }
+
+  .meta {
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 0.8rem;
+  }
+
+  .card-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .card-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    border-radius: 999px;
+    padding: 11px 14px;
+    background: var(--ink);
+    color: #fffaf4;
+    transition: transform 0.2s ease, background 0.2s ease;
+  }
+
+  .card-link:hover,
+  .card-link:focus-visible {
+    background: #0c1116;
+  }
+
+  .download-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    border-radius: 999px;
+    padding: 11px 14px;
+    background: rgba(255, 255, 255, 0.85);
+    color: var(--ink);
+    border: 1px solid rgba(24, 32, 40, 0.12);
+    transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+  }
+
+  .download-link:hover,
+  .download-link:focus-visible {
+    background: #fff;
+    border-color: rgba(24, 32, 40, 0.24);
+    transform: translateY(-2px);
+  }
+
+  .empty-state {
+    display: none;
+    margin-top: 24px;
+    padding: 22px;
+    border-radius: var(--radius-md);
+    background: rgba(255, 255, 255, 0.84);
+    border: 1px dashed rgba(24, 32, 40, 0.16);
+    color: var(--muted);
+    text-align: center;
+  }
+
+  .empty-state.show {
+    display: block;
+  }
+
+  .footer-note {
+    margin-top: 18px;
+    color: var(--muted);
+    font-size: 0.95rem;
+  }
+
+  .timeline {
+    margin-top: 26px;
+    padding: 30px;
+    border-radius: 34px;
+    background: rgba(255, 255, 255, 0.62);
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    box-shadow: var(--shadow);
+    backdrop-filter: blur(10px);
+  }
+
+  .timeline-row {
+    display: flex;
+    gap: 16px;
+    margin-top: 24px;
+    overflow-x: auto;
+    padding-bottom: 8px;
+    scroll-snap-type: x proximity;
+  }
+
+  .timeline-item {
+    position: relative;
+    flex: 0 0 220px;
+    padding: 18px;
+    border-radius: var(--radius-lg);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(251, 243, 233, 0.94));
+    border: 1px solid rgba(24, 32, 40, 0.08);
+    box-shadow: 0 12px 34px rgba(24, 32, 40, 0.08);
+    text-decoration: none;
+    color: var(--ink);
+    scroll-snap-align: start;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .timeline-item:hover,
+  .timeline-item:focus-visible {
+    transform: translateY(-2px);
+    box-shadow: 0 16px 40px rgba(24, 32, 40, 0.12);
+  }
+
+  .timeline-item .order {
+    font-size: 1.4rem;
+  }
+
+  .timeline-item h3 {
+    margin-top: 10px;
+    font-family: var(--display);
+    font-size: 1.1rem;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+  }
+
+  .timeline-item .meta {
+    display: block;
+    margin-top: 12px;
+  }
+
+  @media (max-width: 920px) {
+    .hero {
+      grid-template-columns: 1fr;
+      padding: 28px;
+    }
+  }
+
+  @media (max-width: 720px) {
+    .page {
+      width: min(100vw - 18px, 1180px);
+      padding-bottom: 32px;
+    }
+
+    .hero,
+    .library {
+      border-radius: 26px;
+      padding: 22px;
+    }
+
+    .hero-panel {
+      grid-template-columns: 1fr;
+    }
+
+    .card {
+      min-height: 280px;
+    }
+
+    .card-footer {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+  }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <div>
+        <div class="eyebrow">PRESENTATION ARCHIVE · CARD NEWS</div>
+        <h1>배불뚝이 코딩<br><span>발표자료 아카이브</span></h1>
+        <p>업로드되는 영상의 발표자료를 한 페이지에서 모아 보는 페이지입니다. 발표가 추가될 때마다 카드 한 장이 늘어나고, 각 카드를 누르면 해당 발표자료 HTML로 바로 이동합니다.</p>
+        <div class="hero-actions">
+          <a class="primary" href="#archive">발표자료 보러가기</a>
+          <button class="secondary" type="button" id="latestButton">최신 발표 바로 열기</button>
+        </div>
+      </div>
+
+      <div class="hero-panel">
+        <article class="stat-card">
+          <strong id="deckCount">0</strong>
+          <span>현재 등록된 발표자료</span>
+        </article>
+        <article class="stat-card">
+          <strong id="tagCount">0</strong>
+          <span>활성 주제 태그</span>
+        </article>
+        <article class="memo-card">
+          <h2>운영 방식</h2>
+          <p>이 페이지는 카드 목록만 관리합니다. 실제 발표는 기존처럼 각각 독립된 HTML 파일로 두고, 아래 데이터 목록에 새 파일 정보만 추가하면 카드가 자동으로 렌더링됩니다.</p>
+        </article>
+        <article class="add-card">
+          <h2>새 자료 추가 순서</h2>
+          <ol>
+            <li>새 발표자료 HTML 파일을 같은 폴더에 추가합니다.</li>
+            <li>이 페이지 하단 스크립트의 <strong>presentations</strong> 배열에 항목 하나를 추가합니다.</li>
+            <li>제목, 설명, 태그, 파일명만 입력하면 카드가 자동 생성됩니다.</li>
+          </ol>
+        </article>
+      </div>
+    </section>
+
+    <section class="library" id="archive">
+      <div class="section-head">
+        <div>
+          <h2>발표자료 라이브러리</h2>
+          <p>주제별로 걸러보거나 최신 순으로 빠르게 탐색할 수 있게 구성했습니다.</p>
+        </div>
+      </div>
+
+      <div class="filter-row" id="filterRow"></div>
+      <div class="card-grid" id="cardGrid"></div>
+      <div class="empty-state" id="emptyState">선택한 태그에 해당하는 발표자료가 없습니다.</div>
+      <p class="footer-note">카드 순서는 최신 번호가 먼저 오도록 자동 정렬됩니다.</p>
+    </section>
+
+    <section class="timeline" id="timeline">
+      <div class="section-head">
+        <div>
+          <h2>업로드 타임라인</h2>
+          <p>발표자료가 추가된 순서대로 한 줄에 계속 누적되는 보드입니다.</p>
+        </div>
+      </div>
+      <div class="timeline-row" id="timelineRow"></div>
+    </section>
+  </main>
+
+  <script>
+    const presentations = [
+      {
+        id: 2,
+        title: "바이브 코딩 시작 전 준비해야할것 7가지",
+        description: "바이브 코딩에 들어가기 전에 미리 갖춰야 할 계정, 도구, 환경, 태도를 7개의 카드 흐름으로 정리한 발표자료입니다.",
+        file: "#02_바이브 코딩 시작 전 준비해야할것 7가지.html",
+        dateLabel: "Deck 02",
+        accent: "준비편",
+        tags: ["바이브 코딩", "입문", "준비"]
+      },
+      {
+        id: 1,
+        title: "코딩 1도 몰라도 5분만에 완성",
+        description: "코드를 직접 외우지 않아도 AI와 함께 빠르게 결과물을 만드는 흐름을 소개하는 발표자료입니다.",
+        file: "#01_코딩 1도 몰라도 5분만에 완성.html",
+        dateLabel: "Deck 01",
+        accent: "시작편",
+        tags: ["AI 코딩", "초보", "실전"]
+      }
+    ];
+
+    const sortedPresentations = [...presentations].sort((left, right) => right.id - left.id);
+    const uploadOrderPresentations = [...presentations].sort((left, right) => left.id - right.id);
+    const cardGrid = document.getElementById("cardGrid");
+    const filterRow = document.getElementById("filterRow");
+    const emptyState = document.getElementById("emptyState");
+    const latestButton = document.getElementById("latestButton");
+    const deckCount = document.getElementById("deckCount");
+    const tagCount = document.getElementById("tagCount");
+    const timelineRow = document.getElementById("timelineRow");
+
+    function encodeFileHref(file) {
+      return encodeURI(file).replace(/#/g, "%23");
+    }
+
+    const uniqueTags = ["전체", ...new Set(sortedPresentations.flatMap((item) => item.tags))];
+    let activeTag = "전체";
+
+    deckCount.textContent = String(sortedPresentations.length).padStart(2, "0");
+    tagCount.textContent = String(uniqueTags.length - 1).padStart(2, "0");
+
+    function renderFilters() {
+      filterRow.innerHTML = uniqueTags
+        .map((tag) => {
+          const activeClass = tag === activeTag ? "filter-chip active" : "filter-chip";
+          return '<button type="button" class="' + activeClass + '" data-tag="' + tag + '">' + tag + '</button>';
+        })
+        .join("");
+
+      filterRow.querySelectorAll("[data-tag]").forEach((button) => {
+        button.addEventListener("click", () => {
+          activeTag = button.dataset.tag;
+          renderFilters();
+          renderCards();
+        });
+      });
+    }
+
+    function renderCards() {
+      const visibleItems = activeTag === "전체"
+        ? sortedPresentations
+        : sortedPresentations.filter((item) => item.tags.includes(activeTag));
+
+      emptyState.classList.toggle("show", visibleItems.length === 0);
+
+      cardGrid.innerHTML = visibleItems.map((item) => {
+        const tags = item.tags.map((tag) => '<span class="tag">' + tag + '</span>').join("");
+        const order = String(item.id).padStart(2, "0");
+
+        return [
+          '<article class="card">',
+          '  <div>',
+          '    <div class="card-top">',
+          '      <span class="badge">' + item.accent + '</span>',
+          '      <span class="order">#' + order + '</span>',
+          '    </div>',
+          '    <h3>' + item.title + '</h3>',
+          '    <p>' + item.description + '</p>',
+          '    <div class="tag-list">' + tags + '</div>',
+          '  </div>',
+          '  <div class="card-footer">',
+          '    <span class="meta">' + item.dateLabel + '</span>',
+          '    <div class="card-actions">',
+          '      <a class="download-link" href="' + encodeFileHref(item.file) + '" download>HTML 다운로드 ⬇</a>',
+          '      <a class="card-link" href="' + encodeFileHref(item.file) + '">발표 열기 →</a>',
+          '    </div>',
+          '  </div>',
+          '</article>'
+        ].join("");
+      }).join("");
+    }
+
+    function renderTimeline() {
+      timelineRow.innerHTML = uploadOrderPresentations.map((item) => {
+        const order = String(item.id).padStart(2, "0");
+
+        return [
+          '<a class="timeline-item" href="' + encodeFileHref(item.file) + '">',
+          '  <span class="order">#' + order + '</span>',
+          '  <h3>' + item.title + '</h3>',
+          '  <span class="meta">' + item.dateLabel + '</span>',
+          '</a>'
+        ].join("");
+      }).join("");
+    }
+
+    latestButton.addEventListener("click", () => {
+      if (sortedPresentations.length > 0) {
+        window.location.href = encodeFileHref(sortedPresentations[0].file);
+      }
+    });
+
+    renderFilters();
+    renderCards();
+    renderTimeline();
+  </script>
+</body>
+</html>
