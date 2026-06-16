@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>03. 원스톱 바이브 코딩 — 문장별 발표</title>
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#1A1B3A;--navy-2:#23254d;--cream:#FFF8EF;--cream-2:#FDEFE0;
+    --coral:#FF6B5C;--mint:#3DD6A0;--gold:#FFC247;--ink:#2A2B45;--muted:#6B6C82;
+    --line:rgba(26,27,58,.12);--shadow:0 18px 50px -18px rgba(26,27,58,.35);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%}
+  body{font-family:'Pretendard',system-ui,sans-serif;background:#0e0f24;color:var(--ink);overflow:hidden;-webkit-font-smoothing:antialiased}
+  .deck{position:relative;width:100vw;height:100vh}
+
+  .slide{position:absolute;inset:0;display:none;flex-direction:column;padding:clamp(28px,4.5vw,68px);overflow:hidden}
+  .slide.active{display:flex}
+  .slide.enter-next,.slide.enter-prev{z-index:2}
+  .slide.leave-next,.slide.leave-prev{z-index:1}
+
+  /* directional slide enter/leave */
+  .slide.enter-next{animation:enterNext .55s cubic-bezier(.16,.84,.28,1) both}
+  .slide.enter-prev{animation:enterPrev .55s cubic-bezier(.16,.84,.28,1) both}
+  .slide.leave-next{display:flex;animation:leaveNext .4s cubic-bezier(.5,0,.75,.3) both}
+  .slide.leave-prev{display:flex;animation:leavePrev .4s cubic-bezier(.5,0,.75,.3) both}
+  @keyframes enterNext{from{opacity:0;transform:translateX(60px) scale(.97)}to{opacity:1;transform:translateX(0) scale(1)}}
+  @keyframes enterPrev{from{opacity:0;transform:translateX(-60px) scale(.97)}to{opacity:1;transform:translateX(0) scale(1)}}
+  @keyframes leaveNext{from{opacity:1;transform:translateX(0) scale(1)}to{opacity:0;transform:translateX(-50px) scale(.97)}}
+  @keyframes leavePrev{from{opacity:1;transform:translateX(0) scale(1)}to{opacity:0;transform:translateX(50px) scale(.97)}}
+
+  /* staggered reveal of inner blocks */
+  .slide.active .stage > *{opacity:0;animation:popUp .5s cubic-bezier(.18,.8,.28,1) forwards}
+  .slide.active .stage > *:nth-child(1){animation-delay:.12s}
+  .slide.active .stage > *:nth-child(2){animation-delay:.22s}
+  .slide.active .stage > *:nth-child(3){animation-delay:.32s}
+  .slide.active .stage > *:nth-child(4){animation-delay:.42s}
+  .slide.active .stage > *:nth-child(5){animation-delay:.52s}
+  @keyframes popUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
+
+  /* background art drifts in */
+  .slide.active .bg-art{animation:artIn .8s cubic-bezier(.16,.84,.28,1) both}
+  @keyframes artIn{from{opacity:0;transform:translateY(-50%) translateX(30px) rotate(6deg) scale(.9)}to{opacity:.5;transform:translateY(-50%) translateX(0) rotate(0) scale(1)}}
+  .slide.active .bg-tr,.slide.active .bg-br,.slide.active .bg-bl{animation:artInCorner .8s cubic-bezier(.16,.84,.28,1) both}
+  @keyframes artInCorner{from{opacity:0;transform:translateX(36px) rotate(8deg) scale(.88)}to{opacity:.5;transform:translateX(0) rotate(0) scale(1)}}
+
+  .t-cream{background:radial-gradient(120% 120% at 80% 0%,var(--cream-2) 0%,var(--cream) 55%)}
+  .t-navy{background:radial-gradient(130% 120% at 15% 10%,var(--navy-2) 0%,var(--navy) 60%);color:var(--cream)}
+  .t-coral{background:linear-gradient(135deg,#FF7E70 0%,var(--coral) 60%,#ff5848 100%);color:#fff}
+  .t-mint{background:linear-gradient(150deg,#46e0aa 0%,#2fc78f 70%);color:#08322390}
+
+  /* top bar */
+  .topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;flex:none}
+  .chapter{display:flex;align-items:center;gap:11px;font-weight:800;font-size:clamp(12px,1.3vw,15px);letter-spacing:.02em}
+  .chip{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:11px;padding:5px 11px;border-radius:999px;background:var(--ink);color:var(--cream);white-space:nowrap}
+  .t-navy .chip{background:var(--gold);color:var(--navy)}
+  .t-coral .chip,.t-mint .chip{background:#fff;color:var(--coral)}
+  .timecode{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(11px,1.2vw,14px);opacity:.65}
+
+  /* center stage — one sentence */
+  .stage{flex:1;display:flex;flex-direction:column;justify-content:center;gap:clamp(14px,2.4vh,30px);max-width:1100px;width:100%;margin:0 auto}
+  .eyebrow{font-weight:800;font-size:clamp(13px,1.5vw,18px);letter-spacing:.03em;color:var(--coral);display:flex;align-items:center;gap:9px}
+  .t-navy .eyebrow{color:var(--gold)}.t-coral .eyebrow,.t-mint .eyebrow{color:#fff;opacity:.92}
+
+  .scene{display:inline-flex;align-items:center;gap:9px;font-family:'JetBrains Mono',monospace;font-size:clamp(11px,1.3vw,14px);font-weight:700;background:var(--ink);color:var(--cream);padding:9px 15px;border-radius:11px;align-self:flex-start;opacity:.9}
+  .t-navy .scene{background:rgba(255,255,255,.1)}.t-coral .scene,.t-mint .scene{background:rgba(0,0,0,.2)}
+
+  .say{font-size:clamp(30px,5vw,62px);line-height:1.28;font-weight:800;letter-spacing:-.02em}
+  .say .hl{color:var(--coral)}
+  .t-navy .say .hl{color:var(--gold)}
+  .say .hl2{color:var(--mint)}
+  .t-coral .say .hl,.t-coral .say .hl2,.t-mint .say .hl,.t-mint .say .hl2{color:#fff;text-decoration:underline;text-decoration-color:rgba(255,255,255,.5);text-underline-offset:6px}
+  .big{font-size:clamp(40px,7.5vw,104px);line-height:1.08;font-weight:900;letter-spacing:-.03em}
+  .sub{font-size:clamp(16px,2vw,25px);line-height:1.55;font-weight:500;color:var(--muted)}
+  .t-navy .sub{color:#cfd0e8}.t-coral .sub,.t-mint .sub{color:#fff;opacity:.9}
+
+  /* title bits */
+  .hero-num{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:clamp(56px,11vw,150px);line-height:.85;color:var(--coral)}
+  .tags{display:flex;gap:9px;flex-wrap:wrap;margin-top:4px}
+  .tag{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);padding:7px 15px;border-radius:999px;font-weight:700;font-size:clamp(12px,1.4vw,15px)}
+
+  /* terminal/browser inline mock (compact) */
+  .mockrow{display:flex;gap:16px;flex-wrap:wrap}
+  .mock{border-radius:14px;overflow:hidden;box-shadow:var(--shadow);min-width:240px;flex:1}
+  .mock .bar{display:flex;gap:6px;padding:10px 12px;align-items:center}
+  .dot{width:11px;height:11px;border-radius:50%}
+  .term{background:#0c0d1f}.term .bar{background:#16172e}
+  .term .scr{padding:15px;font-family:'JetBrains Mono',monospace;font-size:clamp(11px,1.2vw,14px);line-height:1.7;color:#ff6b5c}
+  .term .scr .g{color:#5b5d80}
+  .brow{background:#fff;border:1px solid var(--line)}.brow .bar{background:var(--cream-2)}
+  .brow .url{flex:1;background:#fff;border-radius:6px;padding:5px 10px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-left:6px}
+  .brow .scr{padding:20px;text-align:center}
+  .brow .scr .b{font-size:clamp(20px,2.6vw,32px);font-weight:900;color:var(--navy)}
+  .brow .scr .s{color:var(--muted);font-weight:600;margin-top:5px;font-size:13px}
+
+  /* tool emblem */
+  .emblem{font-size:clamp(54px,9vw,120px);line-height:1;display:inline-block}
+  .emblem-row{display:flex;gap:clamp(10px,2vw,22px);align-items:center}
+  .emblem-row .e{font-size:clamp(40px,7vw,92px);line-height:1}
+
+  /* big background watermark illustration */
+  .bg-art{position:absolute;pointer-events:none;z-index:0;opacity:.5}
+  .bg-tr{top:-6%;right:-4%;width:clamp(240px,34vw,520px)}
+  .bg-br{bottom:-8%;right:2%;width:clamp(200px,26vw,400px)}
+  .bg-bl{bottom:-6%;left:-4%;width:clamp(220px,28vw,440px)}
+  .bg-cr{top:50%;right:3%;transform:translateY(-50%);width:clamp(200px,24vw,380px)}
+  .stage,.topbar,.footer{position:relative;z-index:1}
+
+  /* floating mini emojis sprinkled */
+  .sprinkle{position:absolute;z-index:0;font-size:clamp(22px,3vw,46px);opacity:.85;pointer-events:none}
+
+  /* inline accent icon before sentence */
+  .accent-ico{width:clamp(44px,6vw,76px);height:clamp(44px,6vw,76px);display:inline-grid;place-items:center;border-radius:18px;background:rgba(255,107,92,.12);margin-bottom:6px}
+  .t-navy .accent-ico{background:rgba(255,194,71,.16)}
+  .t-coral .accent-ico,.t-mint .accent-ico{background:rgba(255,255,255,.2)}
+
+  .pill-row{display:flex;gap:10px;flex-wrap:wrap}
+  .pill{font-size:clamp(13px,1.5vw,18px);font-weight:700;padding:9px 17px;border-radius:999px;display:inline-flex;align-items:center;gap:7px}
+  .pill.pro{background:#e3f9f0;color:#159e6e;border:1px solid #b6ecd6}
+  .pill.con{background:#ffe9e5;color:#d9544a;border:1px solid #ffc9c1}
+
+  /* prompt code */
+  .prompt{font-family:'JetBrains Mono',monospace;font-size:clamp(15px,2.1vw,26px);line-height:1.5;background:var(--navy);color:var(--mint);padding:clamp(16px,2.2vw,28px);border-radius:16px;font-weight:400;box-shadow:var(--shadow)}
+  .t-navy .prompt{background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.12)}
+
+  /* step number badge */
+  .stepno{display:inline-flex;align-items:center;gap:14px;font-weight:800;font-size:clamp(14px,1.6vw,19px);color:var(--muted)}
+  .stepno .n{width:clamp(48px,6vw,72px);height:clamp(48px,6vw,72px);border-radius:50%;background:var(--navy);color:var(--gold);font-family:'JetBrains Mono',monospace;font-weight:700;display:grid;place-items:center;font-size:clamp(22px,3vw,38px)}
+
+  /* footer */
+  .footer{display:flex;align-items:center;justify-content:space-between;gap:16px;flex:none;padding-top:16px;font-size:12px;font-weight:700}
+  .brand{display:flex;align-items:center;gap:8px;opacity:.82}
+  .brand .logo{width:24px;height:24px;border-radius:7px;background:var(--coral);color:#fff;display:grid;place-items:center;font-weight:900;font-size:14px}
+  .t-coral .brand .logo,.t-mint .brand .logo{background:#fff;color:var(--coral)}
+  .progress{flex:1;max-width:280px;height:5px;border-radius:999px;background:rgba(0,0,0,.12);overflow:hidden;margin:0 8px}
+  .t-navy .progress,.t-coral .progress,.t-mint .progress{background:rgba(255,255,255,.22)}
+  .progress i{display:block;height:100%;background:var(--coral);border-radius:999px;transition:width .4s ease}
+  .t-navy .progress i{background:var(--gold)}.t-coral .progress i,.t-mint .progress i{background:#fff}
+
+  /* nav */
+  .nav{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);display:flex;gap:10px;z-index:50}
+  .nav button{background:rgba(255,255,255,.92);border:1px solid var(--line);width:44px;height:44px;border-radius:50%;font-size:19px;cursor:pointer;box-shadow:var(--shadow);color:var(--navy);transition:.15s;display:grid;place-items:center}
+  .nav button:hover{transform:translateY(-2px);background:#fff}
+  .nav button:active{transform:translateY(0) scale(.9)}
+  .nav .count{align-self:center;font-family:'JetBrains Mono',monospace;font-weight:700;color:#fff;font-size:13px;background:rgba(0,0,0,.45);padding:0 14px;height:44px;display:grid;place-items:center;border-radius:999px}
+
+  @media (max-width:760px){.mockrow{flex-direction:column}}
+  @media (prefers-reduced-motion:reduce){.slide,.slide.active,.slide.active .stage>*,.slide.active .bg-art,.slide.enter-next,.slide.enter-prev{animation:none!important;opacity:1!important;transform:none!important}}
+</style>
+</head>
+<body>
+<div class="deck" id="deck"></div>
+
+<div class="nav">
+  <button id="prev" aria-label="이전">‹</button>
+  <span class="count" id="count">1 / 1</span>
+  <button id="next" aria-label="다음">›</button>
+</div>
+
+<script>
+/* ---- SVG illustration library (theme-aware via currentColor) ---- */
+const ART = {
+  rocket:`<svg class="bg-art bg-tr" viewBox="0 0 200 200" fill="none"><g opacity=".9"><path d="M100 20c26 16 38 44 36 78l-18 16h-36l-18-16c-2-34 10-62 36-78z" fill="#FFC247"/><circle cx="100" cy="78" r="14" fill="#1A1B3A"/><circle cx="100" cy="78" r="6" fill="#3DD6A0"/><path d="M64 116l-14 28 22-8z" fill="#FF6B5C"/><path d="M136 116l14 28-22-8z" fill="#FF6B5C"/><path d="M88 140h24l-6 28-6 10-6-10z" fill="#FF6B5C"/></g></svg>`,
+  bug:`<svg class="bg-art bg-br" viewBox="0 0 200 200" fill="none"><g stroke="#FF6B5C" stroke-width="6" stroke-linecap="round"><line x1="40" y1="70" x2="70" y2="90"/><line x1="40" y1="130" x2="70" y2="110"/><line x1="160" y1="70" x2="130" y2="90"/><line x1="160" y1="130" x2="130" y2="110"/><line x1="50" y1="100" x2="75" y2="100"/><line x1="150" y1="100" x2="125" y2="100"/></g><ellipse cx="100" cy="100" rx="40" ry="50" fill="#FF6B5C"/><circle cx="86" cy="84" r="7" fill="#fff"/><circle cx="114" cy="84" r="7" fill="#fff"/><path d="M100 50v-16" stroke="#FF6B5C" stroke-width="6" stroke-linecap="round"/></svg>`,
+  globe:`<svg class="bg-art bg-cr" viewBox="0 0 200 200" fill="none"><circle cx="100" cy="100" r="70" fill="#3DD6A0" opacity=".25"/><circle cx="100" cy="100" r="70" stroke="#0a8c63" stroke-width="5"/><ellipse cx="100" cy="100" rx="30" ry="70" stroke="#0a8c63" stroke-width="5"/><line x1="30" y1="100" x2="170" y2="100" stroke="#0a8c63" stroke-width="5"/><line x1="44" y1="62" x2="156" y2="62" stroke="#0a8c63" stroke-width="4"/><line x1="44" y1="138" x2="156" y2="138" stroke="#0a8c63" stroke-width="4"/></svg>`,
+  chat:`<svg class="bg-art bg-tr" viewBox="0 0 200 200" fill="none"><rect x="34" y="44" width="120" height="84" rx="20" fill="#FF6B5C" opacity=".85"/><path d="M70 128l-4 26 30-26z" fill="#FF6B5C" opacity=".85"/><circle cx="74" cy="86" r="8" fill="#fff"/><circle cx="100" cy="86" r="8" fill="#fff"/><circle cx="126" cy="86" r="8" fill="#fff"/><rect x="96" y="96" width="80" height="56" rx="16" fill="#FFC247"/><path d="M150 152l4 20-26-20z" fill="#FFC247"/></svg>`,
+  spark:`<svg class="bg-art bg-tr" viewBox="0 0 200 200" fill="none"><path d="M100 30l14 42 42 14-42 14-14 42-14-42-42-14 42-14z" fill="#FFC247"/><path d="M156 110l7 20 20 7-20 7-7 20-7-20-20-7 20-7z" fill="#FF6B5C"/><path d="M44 120l5 14 14 5-14 5-5 14-5-14-14-5 14-5z" fill="#3DD6A0"/></svg>`,
+  gear:`<svg class="bg-art bg-br" viewBox="0 0 200 200" fill="none"><g fill="#5b5d80" opacity=".55"><path d="M100 50l8 2 6-14 16 6-2 16 7 5 14-8 10 14-12 11 1 8 16 4-2 17-16 1-4 8 10 13-13 11-13-9-8 3-2 16h-17l-3-16-8-3-13 9-13-11 10-13-4-8-16-1-2-17 16-4 1-8-12-11 10-14 14 8 7-5-2-16 16-6 6 14z"/><circle cx="100" cy="100" r="22" fill="#FFF8EF"/></g></svg>`,
+  bolt:`<svg class="bg-art bg-tr" viewBox="0 0 200 200" fill="none"><path d="M112 24L60 110h34l-18 66 70-92h-38z" fill="#FFC247" stroke="#FF6B5C" stroke-width="6" stroke-linejoin="round"/></svg>`,
+  robot:`<svg class="bg-art bg-cr" viewBox="0 0 200 200" fill="none"><rect x="52" y="64" width="96" height="80" rx="20" fill="#6B6C82" opacity=".4"/><rect x="52" y="64" width="96" height="80" rx="20" stroke="#23254d" stroke-width="5"/><circle cx="82" cy="104" r="11" fill="#3DD6A0"/><circle cx="118" cy="104" r="11" fill="#3DD6A0"/><line x1="100" y1="64" x2="100" y2="42" stroke="#23254d" stroke-width="5"/><circle cx="100" cy="38" r="7" fill="#FF6B5C"/><rect x="80" y="124" width="40" height="8" rx="4" fill="#23254d"/></svg>`,
+  target:`<svg class="bg-art bg-cr" viewBox="0 0 200 200" fill="none"><circle cx="100" cy="100" r="66" fill="none" stroke="#FFC247" stroke-width="10"/><circle cx="100" cy="100" r="42" fill="none" stroke="#FF6B5C" stroke-width="10"/><circle cx="100" cy="100" r="16" fill="#3DD6A0"/></svg>`,
+  trophy:`<svg class="bg-art bg-tr" viewBox="0 0 200 200" fill="none"><path d="M64 50h72v26c0 26-16 44-36 44s-36-18-36-44z" fill="#FFC247"/><path d="M64 56H44c0 22 12 30 24 30M136 56h20c0 22-12 30-24 30" stroke="#FFC247" stroke-width="8" fill="none"/><rect x="88" y="118" width="24" height="26" fill="#FFC247"/><rect x="68" y="144" width="64" height="14" rx="6" fill="#FF6B5C"/></svg>`,
+  cloud:`<svg class="bg-art bg-cr" viewBox="0 0 200 200" fill="none"><path d="M60 130a30 30 0 010-60 40 40 0 0178-8 28 28 0 016 56z" fill="#fff" opacity=".5"/><path d="M60 130a30 30 0 010-60 40 40 0 0178-8 28 28 0 016 56z" stroke="#fff" stroke-width="4" opacity=".7"/></svg>`,
+  heart:`<svg class="bg-art bg-tr" viewBox="0 0 200 200" fill="none"><path d="M100 150S40 112 40 76a32 32 0 0160-16 32 32 0 0160 16c0 36-60 74-60 74z" fill="#a855f7" opacity=".75"/></svg>`,
+  wave:`<svg class="bg-art bg-bl" viewBox="0 0 200 200" fill="none"><circle cx="100" cy="80" r="40" fill="#FFC247"/><circle cx="86" cy="74" r="5" fill="#1A1B3A"/><circle cx="114" cy="74" r="5" fill="#1A1B3A"/><path d="M82 96q18 16 36 0" stroke="#1A1B3A" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M140 60q16-10 26 4" stroke="#FF6B5C" stroke-width="7" fill="none" stroke-linecap="round"/></svg>`,
+  next:`<svg class="bg-art bg-br" viewBox="0 0 200 200" fill="none"><circle cx="100" cy="100" r="64" fill="none" stroke="#fff" stroke-width="8" opacity=".6"/><path d="M86 72l34 28-34 28z" fill="#fff" opacity=".85"/></svg>`,
+};
+
+/* ---- slide data: one sentence per slide ---- */
+const S = [
+  // TITLE
+  {theme:'t-navy', chip:'EP.03', chapter:'배불뚝이 코딩 · 바이브 코딩 입문', art:'rocket',
+   sprinkle:[{e:'✨',pos:'top:18%;left:8%'},{e:'💻',pos:'bottom:24%;right:14%'},{e:'⭐',pos:'top:30%;right:30%'}],
+   html:`<div class="hero-num">03</div>
+     <div class="big">설치가 필요 없는<br><span style="color:var(--gold)">'원스톱'</span> 바이브 코딩</div>
+     <div class="sub">브라우저 하나로 "말만 하면" 앱이 완성되는 가장 쉬운 방법 🚀</div>
+     <div class="tags"><span class="tag">⏱️ 약 10분</span><span class="tag">🎓 강의형</span><span class="tag">🛠️ 메인 도구 · 레플릿</span></div>`},
+
+  // HOOK
+  {theme:'t-navy', chip:'HOOK', chapter:'초반 3초 후킹', eyebrow:'⚡ 부정형 + 상식 파괴', art:'bug',
+   sprinkle:[{e:'📚',pos:'top:24%;left:7%'},{e:'😵‍💫',pos:'bottom:26%;left:14%'}],
+   scene:'화면: 검은 터미널 에러 → 빨간 X로 날림',
+   html:`<div class="say">📕 아직도 코딩 배우겠다고 책 사고,<br>프로그램부터 설치하고 계셨나요?</div>`},
+  {theme:'t-navy', chip:'HOOK', chapter:'초반 3초 후킹', art:'bug',
+   sprinkle:[{e:'🙅',pos:'top:26%;right:12%'},{e:'💸',pos:'bottom:28%;left:10%'}],
+   html:`<div class="say">😮‍💨 솔직히 말씀드리면,<br><span class="hl">대부분 그 단계에서 포기</span>합니다.</div>`},
+  {theme:'t-navy', chip:'HOOK', chapter:'초반 3초 후킹', art:'spark',
+   scene:'화면: "앱 만들어줘" → 0.5초 만에 웹앱 팟!',
+   html:`<div class="mockrow" style="margin-bottom:6px">
+       <div class="mock term"><div class="bar"><span class="dot" style="background:#ff5f57"></span><span class="dot" style="background:#febc2e"></span><span class="dot" style="background:#28c840"></span></div><div class="scr"><span class="g">$ npm install ...</span><br>✖ npm error<br>✖ dependency failed</div></div>
+       <div class="mock brow"><div class="bar"><span class="dot" style="background:#ff5f57"></span><span class="dot" style="background:#febc2e"></span><span class="dot" style="background:#28c840"></span><span class="url">replit.com</span></div><div class="scr"><div class="b">✨ 앱 완성!</div><div class="s">"앱 만들어줘" 한마디면 끝</div></div></div>
+     </div>
+     <div class="say">사이트에 접속해 <span class="hl2">말만 하면 앱이 완성</span>되는,<br>가장 쉬운 방법이 있습니다. 🎉</div>`},
+
+  // INTRO
+  {theme:'t-cream', chip:'INTRO', chapter:'손실 회피 · 타겟 저격', eyebrow:'🙋 검은 창에서 길 잃은 왕초보 주목!', art:'bug',
+   sprinkle:[{e:'🖥️',pos:'top:22%;right:9%'},{e:'❓',pos:'bottom:24%;right:16%'}],
+   html:`<div class="say">🙋‍♂️ 코딩 한번 해보려다 검은 창에<br>영어 몇 줄 치고 포기하셨던 분들,<br><span class="hl">손들어 보세요.</span></div>`},
+  {theme:'t-cream', chip:'INTRO', chapter:'손실 회피 · 타겟 저격', art:'gear',
+   sprinkle:[{e:'⚙️',pos:'top:26%;left:8%'},{e:'🚧',pos:'bottom:26%;right:12%'}],
+   html:`<div class="say">🧱 입문자가 가장 많이 멈추는 지점은<br>'코딩'이 아니라 <span class="hl">'환경 설정'</span>입니다.</div>`},
+  {theme:'t-cream', chip:'INTRO', chapter:'손실 회피 · 타겟 저격', art:'rocket',
+   sprinkle:[{e:'⏭️',pos:'top:24%;left:9%'},{e:'✅',pos:'bottom:28%;right:14%'}],
+   html:`<div class="say">⏩ 오늘 영상 하나만 끝까지 보시면,<br>그 과정을 <span class="hl">전부 건너뛰고</span><br>브라우저만으로 첫 앱을 완성합니다.</div>`},
+  {theme:'t-cream', chip:'INTRO', chapter:'인사 (후킹 직후 · 약 20초)', eyebrow:'👋 인사는 반드시 여기서', art:'wave',
+   sprinkle:[{e:'🙏',pos:'top:22%;right:10%'},{e:'⛪',pos:'bottom:24%;left:9%'},{e:'💻',pos:'bottom:30%;right:16%'}],
+   html:`<div class="say" style="font-size:clamp(26px,4vw,48px)">👋 "안녕하세요, <span class="hl">배불뚝이 코딩</span>입니다.<br>목회와 개발을 함께 해온 사람으로서,<br>누구나 이해할 수 있게 풀어드리겠습니다."</div>`},
+
+  // 개념
+  {theme:'t-cream', chip:'개념', chapter:'용어 정리', eyebrow:'📖 원스톱 바이브 코딩이란?', art:'globe',
+   sprinkle:[{e:'🤖',pos:'top:24%;left:8%'},{e:'🌐',pos:'bottom:26%;left:14%'}],
+   html:`<div class="sub">전문 용어로는</div><div class="big" style="font-size:clamp(34px,6vw,80px)">'브라우저 기반<br><span style="color:var(--coral)">AI 개발</span>' 💡</div>`},
+  {theme:'t-navy', chip:'개념', chapter:'용어 정리 · 예전 방식', art:'gear',
+   sprinkle:[{e:'⏳',pos:'top:24%;right:10%'},{e:'😩',pos:'bottom:26%;left:12%'}],
+   scene:'화면: 설치·터미널·환경설정 장면',
+   html:`<div class="emblem">🖥️</div><div class="say">프로그램 설치하고, 터미널 열고,<br>에러 해결하고, 환경 설정하다<br><span class="hl">하루가 끝났죠.</span> 😮‍💨</div>`},
+  {theme:'t-mint', chip:'개념', chapter:'용어 정리 · 새로운 방식', art:'cloud',
+   sprinkle:[{e:'☁️',pos:'top:20%;left:8%'},{e:'✨',pos:'bottom:24%;right:12%'},{e:'📱',pos:'top:28%;right:10%'}],
+   scene:'화면: 크롬 브라우저 하나만 띄운 깔끔한 화면',
+   html:`<div class="emblem">🌐</div><div class="say" style="color:#063e2b">내 PC 자원을 단 1%도 안 쓰고,<br>100% 웹 브라우저 안에서<br>기획·개발·수정·배포까지 끝. 🎯</div>`},
+  {theme:'t-cream', chip:'개념', chapter:'용어 정리 · 비유', eyebrow:'🎮 쉽게 비유하면', art:'cloud',
+   sprinkle:[{e:'🎮',pos:'top:22%;left:8%'},{e:'☁️',pos:'bottom:26%;right:12%'},{e:'💻',pos:'bottom:30%;left:14%'}],
+   html:`<div class="emblem-row"><span class="e">🎮</span><span class="e" style="font-size:.6em;color:var(--coral)">→</span><span class="e">☁️</span></div>
+     <div class="say">'<span class="hl">클라우드 게임</span>'과 같습니다.<br>강력한 서버는 클라우드에 두고,<br>우리는 브라우저로 '말'만 겁니다.</div>
+     <div class="sub">📱 그래서 저사양 노트북·태블릿에서도 똑같이 작동하죠.</div>`},
+
+  // TOOLS intro
+  {theme:'t-coral', chip:'TOOLS', chapter:'2026년 4대 도구', eyebrow:'🛠️ 이 4가지만 기억하세요', art:'spark',
+   sprinkle:[{e:'✨',pos:'top:20%;left:8%'},{e:'🔥',pos:'bottom:24%;right:12%'}],
+   html:`<div class="emblem-row" style="margin-bottom:4px"><span class="e">💜</span><span class="e">🟢</span><span class="e">⚡</span><span class="e">🤖</span></div>
+     <div class="big">러버블 · 레플릿<br>볼트 · 데빈</div>
+     <div class="sub">사이트에 접속해서 '한국어로' 말만 하면 끝 👇</div>`},
+
+  // 러버블
+  {theme:'t-cream', chip:'1 / 4', chapter:'러버블 (Lovable)', eyebrow:'1️⃣ 비개발자·기획자·디자이너에게 최적', art:'heart',
+   sprinkle:[{e:'💜',pos:'top:22%;right:10%'},{e:'🎨',pos:'bottom:26%;left:10%'},{e:'🗄️',pos:'bottom:30%;right:14%'}],
+   html:`<div class="emblem">💜</div>
+     <div class="say">한국어로 말만 하면<br>디자인 깔끔한 웹앱을 만들어 줘요. 🎨<br><span class="hl">Supabase 백엔드까지 자동 연결</span>.</div>`},
+  {theme:'t-cream', chip:'1 / 4', chapter:'러버블 (Lovable) · 장단점', art:'heart',
+   html:`<div class="emblem" style="font-size:clamp(40px,6vw,80px)">💜</div>
+     <div class="pill-row"><span class="pill pro">✅ 디자인 퀄리티 높음</span><span class="pill pro">✅ 초보자 접근성 최고</span><span class="pill pro">✅ 빠른 MVP</span></div>
+     <div class="pill-row" style="margin-top:14px"><span class="pill con">⚠️ 복잡한 로직은 한계</span><span class="pill con">⚠️ 무료 사용량 제한</span></div>`},
+
+  // 레플릿
+  {theme:'t-cream', chip:'2 / 4', chapter:'레플릿 (Replit) ⭐ 시연 도구', eyebrow:'2️⃣ 오늘의 시연 도구', art:'globe',
+   sprinkle:[{e:'🟢',pos:'top:22%;right:10%'},{e:'⭐',pos:'bottom:26%;left:10%'},{e:'🚀',pos:'bottom:30%;right:14%'}],
+   html:`<div class="emblem">🟢</div>
+     <div class="say">브라우저 코딩의 <span class="hl">원조 격</span>. 🏆<br>50개 이상 언어 지원, Replit Agent가<br>작성→실행→배포까지 한 화면에서.</div>`},
+  {theme:'t-cream', chip:'2 / 4', chapter:'레플릿 (Replit) · 장단점', art:'globe',
+   html:`<div class="emblem" style="font-size:clamp(40px,6vw,80px)">🟢</div>
+     <div class="pill-row"><span class="pill pro">✅ 설치 불필요</span><span class="pill pro">✅ 강력한 협업</span><span class="pill pro">✅ 코드·인프라 완전 제어</span></div>
+     <div class="pill-row" style="margin-top:14px"><span class="pill con">⚠️ 무료 플랜 성능 제한</span><span class="pill con">⚠️ 무거운 프로젝트는 느릴 수</span></div>`},
+
+  // 볼트
+  {theme:'t-cream', chip:'3 / 4', chapter:'볼트 (Bolt.new)', eyebrow:'3️⃣ 빠른 프로토타입', art:'bolt',
+   sprinkle:[{e:'⚡',pos:'top:22%;right:10%'},{e:'💨',pos:'bottom:26%;left:10%'}],
+   html:`<div class="emblem">⚡</div>
+     <div class="say">프롬프트 한 줄로 풀스택 웹앱.<br><span class="hl">속도가 빠르고</span> 최신 트렌드<br>(Next.js)를 잘 반영해요. 💨</div>
+     <div class="pill-row" style="margin-top:6px"><span class="pill pro">✅ 빠른 속도</span><span class="pill con">⚠️ 결과물 품질 편차</span></div>`},
+
+  // 데빈
+  {theme:'t-cream', chip:'4 / 4', chapter:'데빈 (Devin)', eyebrow:'4️⃣ 고급 자동화', art:'robot',
+   sprinkle:[{e:'🤖',pos:'top:22%;right:10%'},{e:'🛠️',pos:'bottom:26%;left:10%'}],
+   html:`<div class="emblem">🤖</div>
+     <div class="say">거의 '<span class="hl">AI 개발 직원</span>'. 👔<br>코드 작성·테스트·수정까지<br>혼자 진행합니다.</div>
+     <div class="pill-row" style="margin-top:6px"><span class="pill pro">✅ 압도적 자동화</span><span class="pill con">⚠️ 높은 비용 · 입문자엔 부담</span></div>`},
+
+  // 정리
+  {theme:'t-navy', chip:'한눈에', chapter:'도구 선택 가이드', eyebrow:'🎯 이렇게 기억하세요', art:'target',
+   sprinkle:[{e:'💜',pos:'top:20%;left:8%'},{e:'🟢',pos:'top:30%;left:14%'},{e:'⚡',pos:'bottom:26%;left:10%'},{e:'🤖',pos:'bottom:32%;left:18%'}],
+   html:`<div class="say">입문자는 <span class="hl">💜🟢 러버블·레플릿</span>,<br>빠른 프로토타입은 <span class="hl">⚡ 볼트</span>,<br>고급 자동화는 <span class="hl">🤖 데빈</span>.</div>`},
+
+  // 장점
+  {theme:'t-mint', chip:'장점', chapter:'장점 — 진입장벽이 거의 없습니다', eyebrow:'👍 솔직하게 · 장점', art:'rocket',
+   sprinkle:[{e:'🚀',pos:'top:20%;left:8%'},{e:'✨',pos:'bottom:24%;right:12%'},{e:'⚡',pos:'top:28%;right:10%'}],
+   html:`<div class="emblem">👍</div>
+     <div class="say" style="color:#063e2b">설치 제로 · 저사양 OK<br>즉시 배포 · 빠른 검증.</div>
+     <div class="sub" style="color:#063e2b">⏱️ 3일 걸리던 게 10분이면 서비스 초안이 나옵니다.</div>`},
+  // 단점
+  {theme:'t-cream', chip:'단점', chapter:'단점 — 알고 시작하세요', eyebrow:'👎 솔직하게 · 단점', art:'gear',
+   sprinkle:[{e:'💸',pos:'top:22%;right:10%'},{e:'📶',pos:'bottom:26%;left:10%'},{e:'🔒',pos:'bottom:30%;right:14%'}],
+   html:`<div class="emblem">👎</div>
+     <div class="say">비용(월 구독료) · 인터넷 의존<br>세밀한 제어 한계 · 플랫폼 종속.</div>
+     <div class="sub">💡 입문은 쉽지만, 잘 쓰려면 <b>기본적인 이해</b>는 필요합니다.</div>`},
+
+  // 추천대상
+  {theme:'t-navy', chip:'FOR YOU', chapter:'이런 분께 추천', eyebrow:'🎯 하나라도 해당되면 무조건!', art:'target',
+   sprinkle:[{e:'🙌',pos:'top:18%;right:8%'},{e:'💪',pos:'bottom:20%;right:12%'}],
+   html:`<div class="say" style="font-size:clamp(22px,3.4vw,42px)">🤯 문법 공부하다 머리 깨질 뻔한 왕초보<br>🙅 설치 단계에서 포기해 본 분<br>💻 저사양 노트북·태블릿 사용자<br>🚀 빠르게 시제품 만들 기획자·창업자<br>🧑‍💼 자동화 툴 필요한 직장인<br>🧒 코딩 처음인 어린이·학생·비전공자</div>`},
+
+  // DEMO
+  {theme:'t-cream', chip:'DEMO', chapter:'레플릿 실제 시연', eyebrow:'🎬 백문이 불여일견', art:'globe',
+   sprinkle:[{e:'🍱',pos:'top:22%;left:8%'},{e:'🎬',pos:'bottom:24%;right:12%'},{e:'🍜',pos:'bottom:30%;left:14%'}],
+   html:`<div class="emblem">🍽️</div>
+     <div class="big" style="font-size:clamp(32px,5.5vw,72px)">점심 추천 앱<br><span style="color:var(--coral)">5단계로 만들기</span></div>`},
+  {theme:'t-cream', chip:'STEP 1', chapter:'레플릿 시연', art:'globe',
+   sprinkle:[{e:'🔑',pos:'top:24%;right:10%'}],
+   html:`<div class="stepno"><span class="n">1</span> STEP ONE</div>
+     <div class="say">🌐 replit.com 접속 →<br>무료 회원가입 <span class="hl">(구글 계정이면 1분)</span></div>`},
+  {theme:'t-cream', chip:'STEP 2', chapter:'레플릿 시연', art:'chat',
+   sprinkle:[{e:'💬',pos:'top:22%;right:10%'},{e:'🇰🇷',pos:'bottom:26%;left:10%'}],
+   html:`<div class="stepno"><span class="n">2</span> STEP TWO · 💬 Replit Agent에게 한국어로 요청</div>
+     <div class="prompt">"오늘 점심 메뉴를 랜덤 추천하는 웹앱 만들어줘.<br>버튼 누르면 메뉴가 바뀌게."</div>`},
+  {theme:'t-cream', chip:'STEP 3', chapter:'레플릿 시연', art:'spark',
+   sprinkle:[{e:'⌨️',pos:'top:24%;right:10%'},{e:'✨',pos:'bottom:26%;left:10%'}],
+   html:`<div class="stepno"><span class="n">3</span> STEP THREE</div>
+     <div class="say">🪄 레플릿이 알아서 코드 작성 & 화면 구성.<br><span class="hl">코드 한 줄 안 쳤는데 말이죠.</span></div>`},
+  {theme:'t-cream', chip:'STEP 4', chapter:'레플릿 시연', art:'chat',
+   sprinkle:[{e:'🎨',pos:'top:22%;right:10%'},{e:'🍔',pos:'bottom:26%;left:10%'}],
+   html:`<div class="stepno"><span class="n">4</span> STEP FOUR · 👀 미리보기 확인 후 말로 수정</div>
+     <div class="prompt">"버튼 색 초록색으로,<br>추천 메뉴 아래 음식 이모지도 보여줘."</div>`},
+  {theme:'t-cream', chip:'STEP 5', chapter:'레플릿 시연', art:'rocket',
+   sprinkle:[{e:'🚀',pos:'top:22%;right:10%'},{e:'🔗',pos:'bottom:26%;left:10%'},{e:'🎉',pos:'bottom:30%;right:14%'}],
+   html:`<div class="stepno"><span class="n">5</span> STEP FIVE</div>
+     <div class="say">🚀 상단 배포(Deploy) → 링크 공유 →<br><span class="hl">친구 폰에서도 작동</span> 🎉</div>`},
+  {theme:'t-navy', chip:'CORE', chapter:'바이브 코딩의 핵심', eyebrow:'🎥 오늘의 한마디', art:'target',
+   sprinkle:[{e:'🎬',pos:'top:22%;right:10%'},{e:'🎯',pos:'bottom:26%;left:10%'}],
+   html:`<div class="emblem">🎬</div>
+     <div class="say">우리가 한 건 '코딩'이 아니라 <span class="hl">'지시'</span>.<br>AI에게 방향을 알려주는<br><span class="hl">감독의 역할</span>입니다.</div>`},
+
+  // OUTRO
+  {theme:'t-coral', chip:'OUTRO', chapter:'마무리', eyebrow:'🙌 오늘의 정리', art:'trophy',
+   sprinkle:[{e:'🙌',pos:'top:20%;left:8%'},{e:'💡',pos:'bottom:24%;right:12%'},{e:'✨',pos:'top:28%;right:10%'}],
+   html:`<div class="emblem">🙌</div>
+     <div class="big">아이디어와 '바이브'만 있으면<br>누구나 개발자가 되는 시대</div>`},
+  {theme:'t-coral', chip:'NEXT', chapter:'다음 편 예고', eyebrow:'⏭️ 다음 영상에서는', art:'next',
+   sprinkle:[{e:'⌨️',pos:'top:22%;left:8%'},{e:'🖥️',pos:'bottom:24%;right:12%'}],
+   html:`<div class="emblem">⏭️</div>
+     <div class="say">내 컴퓨터에 직접 도구를 설치하는<br><span class="hl">한 단계 위</span>의 바이브 코딩!<br>CLI와 IDE가 무엇인지까지.</div>`},
+  {theme:'t-coral', chip:'THANKS', chapter:'배불뚝이 코딩', art:'trophy',
+   sprinkle:[{e:'🎉',pos:'top:18%;left:8%'},{e:'🙏',pos:'bottom:22%;right:12%'},{e:'❤️',pos:'top:28%;right:10%'}],
+   html:`<div class="big" style="font-size:clamp(40px,7vw,96px)">👍 좋아요<br>🔔 알림 설정<br>✅ 구독</div>
+     <div class="sub" style="margin-top:8px">다음 영상에서 뵙겠습니다. 감사합니다! 🙏</div>`},
+];
+
+const deck=document.getElementById('deck');
+const total=S.length;
+S.forEach((s,idx)=>{
+  const el=document.createElement('section');
+  el.className=`slide ${s.theme}`;
+  el.innerHTML=`
+    ${s.art?ART[s.art]||'':''}
+    <div class="topbar">
+      <div class="chapter"><span class="chip">${s.chip}</span></div>
+    </div>
+    <div class="stage">
+      ${s.eyebrow?`<div class="eyebrow">${s.eyebrow}</div>`:''}
+      ${s.scene?`<div class="scene">🎬 ${s.scene}</div>`:''}
+      ${s.html}
+    </div>
+    <div class="footer">
+      <div class="brand"><span class="logo">배</span> 배불뚝이 코딩</div>
+      <div class="progress"><i style="width:${((idx+1)/total*100).toFixed(1)}%"></i></div>
+      <div class="timecode">${String(idx+1).padStart(2,'0')} / ${total}</div>
+    </div>`;
+  deck.appendChild(el);
+});
+
+const slides=[...document.querySelectorAll('.slide')];
+let i=0, animating=false;
+const reduce=window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+const ENTER_MS=560, LEAVE_MS=360;
+
+function setCount(){document.getElementById('count').textContent=`${i+1} / ${total}`;}
+
+function show(idx){
+  slides.forEach((s,k)=>{s.className=s.className.replace(/\b(enter|leave)-(next|prev)\b/g,'').trim();s.classList.toggle('active',k===idx);});
+  setCount();
+}
+
+function go(target,dir){
+  target=Math.max(0,Math.min(total-1,target));
+  if(target===i||animating)return;
+  if(reduce){i=target;show(i);return;}
+  animating=true;
+  const cur=slides[i], nxt=slides[target];
+  const enterCls=dir>0?'enter-next':'enter-prev';
+  const leaveCls=dir>0?'leave-next':'leave-prev';
+  // start incoming
+  nxt.classList.remove('enter-next','enter-prev','leave-next','leave-prev');
+  nxt.classList.add('active',enterCls);
+  // start outgoing
+  cur.classList.add(leaveCls);
+  setCount();
+  setTimeout(()=>{
+    cur.classList.remove('active','leave-next','leave-prev');
+    nxt.classList.remove(enterCls);
+    i=target;
+    animating=false;
+  },ENTER_MS);
+}
+
+function next(){go(i+1,1);}
+function prev(){go(i-1,-1);}
+
+document.getElementById('next').onclick=next;
+document.getElementById('prev').onclick=prev;
+document.addEventListener('keydown',e=>{
+  if(['ArrowRight','PageDown',' '].includes(e.key)){e.preventDefault();next();}
+  if(['ArrowLeft','PageUp'].includes(e.key)){e.preventDefault();prev();}
+  if(e.key==='Home')go(0,-1);if(e.key==='End')go(total-1,1);
+});
+let sx=null;
+document.addEventListener('touchstart',e=>sx=e.touches[0].clientX,{passive:true});
+document.addEventListener('touchend',e=>{if(sx===null)return;const dx=e.changedTouches[0].clientX-sx;if(Math.abs(dx)>50){dx<0?next():prev();}sx=null;},{passive:true});
+show(0);
+</script>
+</body>
+</html>

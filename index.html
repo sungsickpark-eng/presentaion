@@ -552,6 +552,152 @@
       flex-direction: column;
     }
   }
+
+  /* ── Upload Modal ─────────────────────────────────────────────── */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    background: rgba(24, 32, 40, 0.55);
+    backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+  }
+
+  .modal-overlay.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .modal {
+    width: min(560px, 100%);
+    max-height: 90vh;
+    overflow-y: auto;
+    border-radius: var(--radius-xl);
+    background: linear-gradient(160deg, rgba(255, 251, 245, 0.98), rgba(255, 244, 223, 0.96));
+    border: 1px solid rgba(255, 255, 255, 0.75);
+    box-shadow: 0 40px 100px rgba(24, 32, 40, 0.2);
+    padding: 32px;
+    transform: translateY(24px);
+    transition: transform 0.28s ease;
+  }
+
+  .modal-overlay.open .modal {
+    transform: translateY(0);
+  }
+
+  .modal-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 26px;
+  }
+
+  .modal-head h2 {
+    font-family: var(--display);
+    font-size: 1.6rem;
+    letter-spacing: -0.02em;
+  }
+
+  .modal-close {
+    appearance: none;
+    border: none;
+    background: rgba(24, 32, 40, 0.08);
+    color: var(--ink);
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1.1rem;
+    transition: background 0.2s, transform 0.2s;
+    flex-shrink: 0;
+  }
+
+  .modal-close:hover { background: rgba(24, 32, 40, 0.16); transform: rotate(90deg); }
+
+  .form-group { margin-bottom: 18px; }
+
+  .form-group label {
+    display: block;
+    font-size: 0.88rem;
+    font-family: var(--mono);
+    letter-spacing: 0.05em;
+    color: var(--muted);
+    margin-bottom: 7px;
+  }
+
+  .form-group input,
+  .form-group textarea {
+    width: 100%;
+    border: 1.5px solid rgba(24, 32, 40, 0.12);
+    border-radius: var(--radius-md);
+    background: rgba(255, 255, 255, 0.88);
+    color: var(--ink);
+    font-family: var(--body);
+    font-size: 1rem;
+    padding: 11px 14px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .form-group input:focus,
+  .form-group textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(255, 111, 60, 0.12);
+  }
+
+  .form-group textarea { resize: vertical; min-height: 88px; }
+
+  .form-group input[type="file"] { padding: 9px 12px; cursor: pointer; }
+
+  .form-hint {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-top: 5px;
+  }
+
+  .upload-submit {
+    width: 100%;
+    margin-top: 6px;
+    padding: 14px;
+    border: none;
+    border-radius: 999px;
+    background: var(--accent);
+    color: #fffaf4;
+    font-family: var(--body);
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 10px 28px rgba(221, 77, 30, 0.22);
+    transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+  }
+
+  .upload-submit:hover:not(:disabled) {
+    background: var(--accent-deep);
+    transform: translateY(-2px);
+    box-shadow: 0 14px 36px rgba(221, 77, 30, 0.3);
+  }
+
+  .upload-submit:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+
+  .upload-status {
+    display: none;
+    margin-top: 16px;
+    padding: 14px 16px;
+    border-radius: var(--radius-md);
+    font-size: 0.95rem;
+    line-height: 1.55;
+  }
+
+  .upload-status.info    { display: block; background: rgba(130, 215, 255, 0.18); border: 1px solid rgba(130, 215, 255, 0.45); color: #1a3a52; }
+  .upload-status.success { display: block; background: rgba(184, 242, 214, 0.28); border: 1px solid rgba(184, 242, 214, 0.75); color: #175c38; }
+  .upload-status.error   { display: block; background: rgba(255, 111, 60, 0.1);   border: 1px solid rgba(255, 111, 60, 0.3);  color: var(--accent-deep); }
   </style>
 </head>
 <body>
@@ -564,6 +710,7 @@
         <div class="hero-actions">
           <a class="primary" href="#archive">발표자료 보러가기</a>
           <button class="secondary" type="button" id="latestButton">최신 발표 바로 열기</button>
+          <button class="secondary" type="button" id="uploadButton">↑ 자료 업로드</button>
         </div>
       </div>
 
@@ -615,6 +762,46 @@
       <div class="timeline-row" id="timelineRow"></div>
     </section>
   </main>
+
+  <!-- Upload Modal -->
+  <div class="modal-overlay" id="uploadModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle" aria-hidden="true">
+    <div class="modal">
+      <div class="modal-head">
+        <h2 id="modalTitle">새 발표자료 업로드</h2>
+        <button class="modal-close" id="modalClose" aria-label="닫기">✕</button>
+      </div>
+      <form id="uploadForm" novalidate>
+        <div class="form-group">
+          <label for="ghToken">GitHub Personal Access Token</label>
+          <input type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off">
+          <span class="form-hint">repo 쓰기 권한이 필요합니다. 입력값은 브라우저에만 저장됩니다.</span>
+        </div>
+        <div class="form-group">
+          <label for="deckFile">HTML 발표자료 파일</label>
+          <input type="file" id="deckFile" accept=".html,.htm">
+        </div>
+        <div class="form-group">
+          <label for="deckTitle">제목</label>
+          <input type="text" id="deckTitle" placeholder="예: 원스톱 바이브코딩 실전 가이드">
+        </div>
+        <div class="form-group">
+          <label for="deckDesc">설명</label>
+          <textarea id="deckDesc" placeholder="이 발표자료에 대한 간략한 설명을 입력하세요."></textarea>
+        </div>
+        <div class="form-group">
+          <label for="deckAccent">뱃지 라벨</label>
+          <input type="text" id="deckAccent" placeholder="예: 실전편, 준비편, 심화편">
+        </div>
+        <div class="form-group">
+          <label for="deckTags">태그</label>
+          <input type="text" id="deckTags" placeholder="예: 바이브 코딩, 실전, AI">
+          <span class="form-hint">쉼표로 구분하여 입력하세요.</span>
+        </div>
+        <button type="submit" class="upload-submit">GitHub에 업로드하기 ↑</button>
+      </form>
+      <div class="upload-status" id="uploadStatus"></div>
+    </div>
+  </div>
 
   <script>
     const presentations = [
@@ -732,6 +919,182 @@
     renderFilters();
     renderCards();
     renderTimeline();
+
+    // ── GitHub Upload ──────────────────────────────────────────────────────
+    const GITHUB_OWNER  = 'sungsickpark-eng';
+    const GITHUB_REPO   = 'presentaion';
+    const GITHUB_BRANCH = 'main';
+
+    const uploadModal  = document.getElementById('uploadModal');
+    const uploadButton = document.getElementById('uploadButton');
+    const modalClose   = document.getElementById('modalClose');
+    const uploadForm   = document.getElementById('uploadForm');
+    const uploadStatus = document.getElementById('uploadStatus');
+    const tokenInput   = document.getElementById('ghToken');
+
+    tokenInput.value = localStorage.getItem('gh_token') || '';
+
+    function openModal() {
+      uploadModal.removeAttribute('aria-hidden');
+      uploadModal.classList.add('open');
+      tokenInput.focus();
+    }
+
+    function closeModal() {
+      uploadModal.setAttribute('aria-hidden', 'true');
+      uploadModal.classList.remove('open');
+      uploadStatus.className = 'upload-status';
+      uploadStatus.innerHTML = '';
+    }
+
+    uploadButton.addEventListener('click', openModal);
+    modalClose.addEventListener('click', closeModal);
+    uploadModal.addEventListener('click', (e) => { if (e.target === uploadModal) closeModal(); });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && uploadModal.classList.contains('open')) closeModal();
+    });
+
+    function utf8ToBase64(str) {
+      const bytes = new TextEncoder().encode(str);
+      let binary = '';
+      bytes.forEach(b => binary += String.fromCharCode(b));
+      return btoa(binary);
+    }
+
+    function base64ToUtf8(b64) {
+      const binary = atob(b64.replace(/\n/g, ''));
+      const bytes = Uint8Array.from(binary, c => c.charCodeAt(0));
+      return new TextDecoder().decode(bytes);
+    }
+
+    async function ghRequest(token, method, rawPath, body) {
+      const encoded = rawPath.split('/').map(encodeURIComponent).join('/');
+      const url = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${encoded}` +
+        (method === 'GET' ? `?ref=${GITHUB_BRANCH}` : '');
+      const res = await fetch(url, {
+        method,
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/vnd.github+json',
+          ...(body ? { 'Content-Type': 'application/json' } : {})
+        },
+        ...(body ? { body: JSON.stringify(body) } : {})
+      });
+      if (!res.ok) {
+        if (res.status === 404 && method === 'GET') return null;
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || `GitHub API 오류 (${res.status})`);
+      }
+      return res.json();
+    }
+
+    function setStatus(msg, type) {
+      uploadStatus.className = 'upload-status ' + (type || 'info');
+      uploadStatus.innerHTML = msg;
+    }
+
+    uploadForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const token     = tokenInput.value.trim();
+      const titleVal  = document.getElementById('deckTitle').value.trim();
+      const descVal   = document.getElementById('deckDesc').value.trim();
+      const accentVal = document.getElementById('deckAccent').value.trim();
+      const tagsVal   = document.getElementById('deckTags').value.trim()
+        .split(',').map(t => t.trim()).filter(Boolean);
+      const fileEl    = document.getElementById('deckFile');
+
+      if (!token)              { setStatus('GitHub 토큰을 입력해주세요.', 'error'); return; }
+      if (!fileEl.files[0])   { setStatus('HTML 파일을 선택해주세요.', 'error'); return; }
+      if (!titleVal || !descVal || !accentVal) { setStatus('모든 항목을 입력해주세요.', 'error'); return; }
+      if (tagsVal.length === 0) { setStatus('태그를 하나 이상 입력해주세요.', 'error'); return; }
+
+      localStorage.setItem('gh_token', token);
+
+      const submitBtn = uploadForm.querySelector('.upload-submit');
+      submitBtn.disabled = true;
+
+      try {
+        const nextId   = Math.max(0, ...presentations.map(p => p.id)) + 1;
+        const padId    = String(nextId).padStart(2, '0');
+        const fileName = `#${padId}_${titleVal}.html`;
+
+        setStatus('파일 읽는 중…', 'info');
+        const fileContent = await fileEl.files[0].text();
+
+        setStatus(`발표자료 파일 업로드 중… (${fileName})`, 'info');
+        const existing = await ghRequest(token, 'GET', fileName);
+        await ghRequest(token, 'PUT', fileName, {
+          message: `Add deck ${padId}: ${titleVal}`,
+          content: utf8ToBase64(fileContent),
+          branch: GITHUB_BRANCH,
+          ...(existing ? { sha: existing.sha } : {})
+        });
+
+        setStatus('index.html 업데이트 중…', 'info');
+        const indexFile = await ghRequest(token, 'GET', 'index.html');
+        if (!indexFile) throw new Error('index.html을 저장소에서 찾을 수 없습니다.');
+        const indexContent = base64ToUtf8(indexFile.content);
+
+        const esc = (s) => s.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+        const newEntry =
+          `{\n        id: ${nextId},\n` +
+          `        title: "${esc(titleVal)}",\n` +
+          `        description: "${esc(descVal)}",\n` +
+          `        file: "${esc(fileName)}",\n` +
+          `        dateLabel: "Deck ${padId}",\n` +
+          `        accent: "${esc(accentVal)}",\n` +
+          `        tags: [${tagsVal.map(t => `"${esc(t)}"`).join(', ')}]\n` +
+          `      }`;
+
+        const marker = 'const presentations = [';
+        const markerIdx = indexContent.indexOf(marker);
+        if (markerIdx === -1) throw new Error('presentations 배열을 찾을 수 없습니다.');
+        const insertAt = markerIdx + marker.length;
+        const updatedIndex =
+          indexContent.slice(0, insertAt) + '\n      ' + newEntry + ',' + indexContent.slice(insertAt);
+
+        await ghRequest(token, 'PUT', 'index.html', {
+          message: `Update archive: add deck ${padId}`,
+          content: utf8ToBase64(updatedIndex),
+          sha: indexFile.sha,
+          branch: GITHUB_BRANCH
+        });
+
+        // Update local state and re-render without page reload
+        const newPres = {
+          id: nextId, title: titleVal, description: descVal,
+          file: fileName, dateLabel: `Deck ${padId}`, accent: accentVal, tags: tagsVal
+        };
+        presentations.push(newPres);
+        sortedPresentations.length = 0;
+        uploadOrderPresentations.length = 0;
+        [...presentations].sort((a, b) => b.id - a.id).forEach(p => sortedPresentations.push(p));
+        [...presentations].sort((a, b) => a.id - b.id).forEach(p => uploadOrderPresentations.push(p));
+        const freshTags = ["전체", ...new Set(sortedPresentations.flatMap(p => p.tags))];
+        uniqueTags.length = 0;
+        freshTags.forEach(t => uniqueTags.push(t));
+        deckCount.textContent = String(sortedPresentations.length).padStart(2, '0');
+        tagCount.textContent  = String(uniqueTags.length - 1).padStart(2, '0');
+        activeTag = "전체";
+        renderFilters();
+        renderCards();
+        renderTimeline();
+
+        setStatus(
+          `✅ <strong>Deck ${padId} — ${titleVal}</strong> 업로드 완료!<br>` +
+          `GitHub Pages 반영까지 1~2분 소요될 수 있습니다.`,
+          'success'
+        );
+        uploadForm.reset();
+        tokenInput.value = localStorage.getItem('gh_token') || '';
+
+      } catch (err) {
+        setStatus('❌ ' + err.message, 'error');
+      } finally {
+        submitBtn.disabled = false;
+      }
+    });
   </script>
 </body>
 </html>
