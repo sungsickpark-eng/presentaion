@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>나의 스케줄러</title>
+<style>
+  :root{
+    --bg:#f4f5f7;
+    --panel:#ffffff;
+    --border:#e2e4e9;
+    --text:#22252a;
+    --muted:#8a8f98;
+    --accent:#4f6ef7;
+    --accent-light:#e8ecff;
+    --today:#ff7a59;
+    --done:#2fb572;
+    --done-bg:#e7f8ef;
+    --hour-h:56px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:-apple-system,"Segoe UI",Malgun Gothic,Arial,sans-serif;
+    background:var(--bg);
+    color:var(--text);
+  }
+  header{
+    padding:16px 24px;
+    background:var(--panel);
+    border-bottom:1px solid var(--border);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+  header h1{
+    font-size:18px;
+    margin:0;
+  }
+  .layout{
+    display:flex;
+    gap:16px;
+    padding:16px;
+    align-items:flex-start;
+  }
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:16px;
+  }
+
+  /* Calendar */
+  .calendar-panel{
+    width:340px;
+    flex-shrink:0;
+  }
+  .cal-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:12px;
+  }
+  .cal-header .cal-title{
+    font-size:16px;
+    font-weight:600;
+  }
+  .cal-nav{
+    display:flex;
+    gap:4px;
+  }
+  .cal-nav button{
+    border:none;
+    background:var(--bg);
+    border-radius:6px;
+    width:28px;
+    height:28px;
+    cursor:pointer;
+    font-size:14px;
+    color:var(--text);
+  }
+  .cal-nav button:hover{ background:var(--accent-light); }
+  .today-btn{
+    border:1px solid var(--border);
+    background:var(--panel);
+    border-radius:6px;
+    padding:4px 10px;
+    font-size:12px;
+    cursor:pointer;
+    color:var(--text);
+  }
+  .today-btn:hover{ background:var(--accent-light); }
+  table.cal-grid{
+    width:100%;
+    border-collapse:collapse;
+  }
+  table.cal-grid th{
+    font-size:11px;
+    color:var(--muted);
+    font-weight:500;
+    padding:4px 0;
+  }
+  table.cal-grid td{
+    text-align:center;
+    padding:2px;
+  }
+  .day-cell{
+    width:36px;
+    height:36px;
+    line-height:36px;
+    border-radius:8px;
+    cursor:pointer;
+    font-size:13px;
+    margin:0 auto;
+    position:relative;
+  }
+  .day-cell:hover{ background:var(--accent-light); }
+  .day-cell.other-month{ color:#c7cad1; }
+  .day-cell.is-today{ color:var(--today); font-weight:700; }
+  .day-cell.is-selected{ background:var(--accent); color:#fff; }
+  .day-cell.is-selected.is-today{ color:#fff; }
+  .day-cell .dot{
+    position:absolute;
+    bottom:2px;
+    left:50%;
+    transform:translateX(-50%);
+    width:4px;
+    height:4px;
+    border-radius:50%;
+    background:var(--accent);
+  }
+  .day-cell.is-selected .dot{ background:#fff; }
+
+  .selected-date-info{
+    margin-top:16px;
+    padding-top:12px;
+    border-top:1px solid var(--border);
+    font-size:13px;
+    color:var(--muted);
+  }
+  .selected-date-info b{
+    color:var(--text);
+    display:block;
+    font-size:15px;
+    margin-bottom:4px;
+  }
+  .summary-bar{
+    display:flex;
+    gap:8px;
+    margin-top:10px;
+  }
+  .summary-chip{
+    flex:1;
+    background:var(--bg);
+    border-radius:8px;
+    padding:8px;
+    text-align:center;
+  }
+  .summary-chip .num{ font-size:18px; font-weight:700; }
+  .summary-chip .label{ font-size:11px; color:var(--muted); }
+
+  /* Timeline panel */
+  .timeline-panel{
+    flex:1;
+    min-width:0;
+  }
+  .timeline-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:14px;
+  }
+  .timeline-header .t-title{
+    font-size:16px;
+    font-weight:600;
+  }
+  .timeline-header .t-sub{
+    font-size:12px;
+    color:var(--muted);
+  }
+  .add-btn{
+    border:none;
+    background:var(--accent);
+    color:#fff;
+    padding:9px 16px;
+    border-radius:8px;
+    font-size:13px;
+    font-weight:600;
+    cursor:pointer;
+    flex-shrink:0;
+  }
+  .add-btn:hover{ opacity:0.9; }
+
+  /* Add task form */
+  .add-form{
+    display:none;
+    background:var(--accent-light);
+    border-radius:10px;
+    padding:14px;
+    margin-bottom:16px;
+    gap:10px;
+    flex-wrap:wrap;
+    align-items:flex-end;
+  }
+  .add-form.open{ display:flex; }
+  .form-field{
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+  }
+  .form-field label{
+    font-size:11px;
+    color:var(--muted);
+  }
+  .form-field input[type="time"],
+  .form-field input[type="text"]{
+    border:1px solid var(--border);
+    border-radius:6px;
+    padding:7px 9px;
+    font-size:13px;
+    font-family:inherit;
+  }
+  .form-field.title-field{
+    flex:1;
+    min-width:180px;
+  }
+  .form-field.title-field input{ width:100%; }
+  .form-actions{
+    display:flex;
+    gap:6px;
+  }
+  .form-actions button{
+    border:none;
+    border-radius:6px;
+    padding:8px 14px;
+    font-size:13px;
+    cursor:pointer;
+    font-weight:600;
+  }
+  .btn-submit{ background:var(--accent); color:#fff; }
+  .btn-submit:hover{ opacity:0.9; }
+  .btn-cancel{ background:#fff; color:var(--muted); border:1px solid var(--border) !important; }
+  .btn-cancel:hover{ background:var(--bg); }
+
+  /* Day timeline (single column, full day) */
+  .day-timeline-wrap{
+    display:flex;
+  }
+  .hour-axis{
+    width:52px;
+    flex-shrink:0;
+  }
+  .hour-tick{
+    height:var(--hour-h);
+    font-size:11px;
+    color:var(--muted);
+    text-align:right;
+    padding-right:8px;
+    box-sizing:border-box;
+    transform:translateY(-6px);
+  }
+  .day-track{
+    position:relative;
+    flex:1;
+    border-left:1px solid var(--border);
+    background-image: repeating-linear-gradient(
+      to bottom,
+      var(--border) 0,
+      var(--border) 1px,
+      transparent 1px,
+      transparent var(--hour-h)
+    );
+  }
+  .now-line{
+    position:absolute;
+    left:0;
+    right:0;
+    height:0;
+    border-top:2px solid var(--today);
+    z-index:5;
+  }
+  .now-line::before{
+    content:"";
+    position:absolute;
+    left:-5px;
+    top:-4px;
+    width:8px;
+    height:8px;
+    border-radius:50%;
+    background:var(--today);
+  }
+  .empty-hint{
+    position:absolute;
+    top:12px;
+    left:12px;
+    right:12px;
+    font-size:13px;
+    color:var(--muted);
+  }
+
+  .task-block{
+    position:absolute;
+    left:8px;
+    right:8px;
+    background:#fff;
+    border:1px solid var(--accent);
+    border-left:4px solid var(--accent);
+    border-radius:8px;
+    padding:6px 10px;
+    font-size:12px;
+    overflow:hidden;
+    cursor:pointer;
+    box-shadow:0 1px 2px rgba(0,0,0,0.04);
+    z-index:2;
+  }
+  .task-block.is-done{
+    border-color:var(--done);
+    border-left-color:var(--done);
+    background:var(--done-bg);
+  }
+  .task-block .tb-time{
+    font-size:11px;
+    color:var(--muted);
+    font-weight:600;
+  }
+  .task-block.is-done .tb-time{ color:var(--done); }
+  .task-block .tb-title{
+    font-size:13px;
+    font-weight:600;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .task-block.is-done .tb-title{
+    text-decoration:line-through;
+    color:var(--muted);
+  }
+  .task-block .tb-result-preview{
+    font-size:11px;
+    color:var(--muted);
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+
+  /* Expanded editor panel below timeline for a selected task */
+  .task-editor{
+    display:none;
+    margin-top:16px;
+    padding:16px;
+    border:1px solid var(--border);
+    border-radius:10px;
+    background:var(--bg);
+  }
+  .task-editor.open{ display:block; }
+  .task-editor-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:10px;
+  }
+  .task-editor-head .te-title{
+    font-size:14px;
+    font-weight:700;
+  }
+  .task-editor-head .te-time{
+    font-size:12px;
+    color:var(--muted);
+  }
+  .te-row{
+    display:flex;
+    gap:16px;
+    margin-bottom:10px;
+  }
+  .te-col{
+    flex:1;
+  }
+  .te-col label{
+    font-size:11px;
+    color:var(--muted);
+    display:block;
+    margin-bottom:4px;
+  }
+  .te-col textarea, .te-col input[type="text"]{
+    width:100%;
+    border:1px solid var(--border);
+    border-radius:6px;
+    padding:8px;
+    font-size:13px;
+    font-family:inherit;
+    resize:vertical;
+    min-height:70px;
+  }
+  .te-time-inputs{
+    display:flex;
+    gap:8px;
+  }
+  .te-time-inputs input{
+    border:1px solid var(--border);
+    border-radius:6px;
+    padding:6px 8px;
+    font-size:12px;
+    font-family:inherit;
+  }
+  .te-footer{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-top:12px;
+  }
+  .te-done-check{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    font-size:13px;
+    cursor:pointer;
+  }
+  .te-actions button{
+    border:none;
+    border-radius:6px;
+    padding:7px 14px;
+    font-size:12px;
+    cursor:pointer;
+    font-weight:600;
+    margin-left:6px;
+  }
+  .btn-delete{ background:#fff; color:#e0473e; border:1px solid #f2c9c6 !important; }
+  .btn-delete:hover{ background:#fff0ef; }
+  .btn-close{ background:var(--accent); color:#fff; }
+  .btn-close:hover{ opacity:0.9; }
+
+  ::placeholder{ color:#b7bac2; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>📅 나의 스케줄러</h1>
+  <div id="clock" style="font-size:13px;color:var(--muted);"></div>
+</header>
+
+<div class="layout">
+
+  <!-- Calendar -->
+  <div class="panel calendar-panel">
+    <div class="cal-header">
+      <div class="cal-nav">
+        <button id="prevMonth">‹</button>
+        <button id="nextMonth">›</button>
+      </div>
+      <div class="cal-title" id="calTitle"></div>
+      <button class="today-btn" id="gotoToday">오늘</button>
+    </div>
+    <table class="cal-grid">
+      <thead>
+        <tr>
+          <th>일</th><th>월</th><th>화</th><th>수</th><th>목</th><th>금</th><th>토</th>
+        </tr>
+      </thead>
+      <tbody id="calBody"></tbody>
+    </table>
+
+    <div class="selected-date-info">
+      <b id="selectedDateLabel"></b>
+      <span id="selectedDateWeekday"></span>
+      <div class="summary-bar">
+        <div class="summary-chip">
+          <div class="num" id="sumTotal">0</div>
+          <div class="label">전체 일정</div>
+        </div>
+        <div class="summary-chip">
+          <div class="num" id="sumDone">0</div>
+          <div class="label">완료됨</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Timeline -->
+  <div class="panel timeline-panel">
+    <div class="timeline-header">
+      <div>
+        <div class="t-title" id="timelineTitle"></div>
+        <div class="t-sub">할일 등록 버튼으로 시간과 일정을 등록하고, 등록된 일정을 클릭해 실행 결과를 기록하세요.</div>
+      </div>
+      <button class="add-btn" id="openAddForm">+ 할일 등록</button>
+    </div>
+
+    <div class="add-form" id="addForm">
+      <div class="form-field">
+        <label>시작 시간</label>
+        <input type="time" id="newStart" value="09:00">
+      </div>
+      <div class="form-field">
+        <label>종료 시간</label>
+        <input type="time" id="newEnd" value="10:00">
+      </div>
+      <div class="form-field title-field">
+        <label>일정 내용</label>
+        <input type="text" id="newTitle" placeholder="예: 팀 회의, 보고서 작성 등">
+      </div>
+      <div class="form-actions">
+        <button class="btn-submit" id="submitAddForm">등록</button>
+        <button class="btn-cancel" id="cancelAddForm">취소</button>
+      </div>
+    </div>
+
+    <div class="day-timeline-wrap">
+      <div class="hour-axis" id="hourAxis"></div>
+      <div class="day-track" id="dayTrack">
+        <div class="empty-hint" id="emptyHint">등록된 일정이 없습니다. 상단의 '+ 할일 등록' 버튼을 눌러 일정을 추가하세요.</div>
+      </div>
+    </div>
+
+    <div class="task-editor" id="taskEditor">
+      <div class="task-editor-head">
+        <div>
+          <div class="te-title" id="teTitleDisplay"></div>
+          <div class="te-time" id="teTimeDisplay"></div>
+        </div>
+      </div>
+      <div class="te-row">
+        <div class="te-col">
+          <label>일정 내용</label>
+          <input type="text" id="teTitleInput">
+        </div>
+      </div>
+      <div class="te-row">
+        <div class="te-col" style="flex:0 0 auto;">
+          <label>시간</label>
+          <div class="te-time-inputs">
+            <input type="time" id="teStartInput">
+            <span style="align-self:center;color:var(--muted);">~</span>
+            <input type="time" id="teEndInput">
+          </div>
+        </div>
+      </div>
+      <div class="te-row">
+        <div class="te-col">
+          <label>실행 결과 기록</label>
+          <textarea id="teResultInput" placeholder="실행 후 결과나 메모를 입력하세요"></textarea>
+        </div>
+      </div>
+      <div class="te-footer">
+        <label class="te-done-check">
+          <input type="checkbox" id="teDoneCheck">
+          완료됨
+        </label>
+        <div class="te-actions">
+          <button class="btn-delete" id="teDelete">삭제</button>
+          <button class="btn-close" id="teClose">닫기</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  const STORAGE_KEY = "scheduler_data_v2";
+  const WEEKDAYS = ["일","월","화","수","목","금","토"];
+  const HOUR_H = 56; // px, keep in sync with --hour-h
+
+  function todayDate(){
+    const d = new Date();
+    d.setHours(0,0,0,0);
+    return d;
+  }
+  function fmtKey(d){
+    const y = d.getFullYear();
+    const m = String(d.getMonth()+1).padStart(2,"0");
+    const day = String(d.getDate()).padStart(2,"0");
+    return `${y}-${m}-${day}`;
+  }
+  function timeToMinutes(t){
+    const [h,m] = t.split(":").map(Number);
+    return h*60+m;
+  }
+  function minutesToLabel(min){
+    const h = Math.floor(min/60), m = min%60;
+    return `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}`;
+  }
+
+  function loadData(){
+    try{
+      return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+    }catch(e){ return {}; }
+  }
+  function saveData(data){
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  }
+
+  let data = loadData();
+  let today = todayDate();
+  let viewYear = today.getFullYear();
+  let viewMonth = today.getMonth();
+  let selectedDate = new Date(today);
+  let activeTaskId = null;
+
+  const calTitle = document.getElementById("calTitle");
+  const calBody = document.getElementById("calBody");
+  const selectedDateLabel = document.getElementById("selectedDateLabel");
+  const selectedDateWeekday = document.getElementById("selectedDateWeekday");
+  const sumTotal = document.getElementById("sumTotal");
+  const sumDone = document.getElementById("sumDone");
+  const timelineTitle = document.getElementById("timelineTitle");
+  const clockEl = document.getElementById("clock");
+  const hourAxis = document.getElementById("hourAxis");
+  const dayTrack = document.getElementById("dayTrack");
+  const emptyHint = document.getElementById("emptyHint");
+
+  const addForm = document.getElementById("addForm");
+  const openAddFormBtn = document.getElementById("openAddForm");
+  const cancelAddFormBtn = document.getElementById("cancelAddForm");
+  const submitAddFormBtn = document.getElementById("submitAddForm");
+  const newStart = document.getElementById("newStart");
+  const newEnd = document.getElementById("newEnd");
+  const newTitle = document.getElementById("newTitle");
+
+  const taskEditor = document.getElementById("taskEditor");
+  const teTitleDisplay = document.getElementById("teTitleDisplay");
+  const teTimeDisplay = document.getElementById("teTimeDisplay");
+  const teTitleInput = document.getElementById("teTitleInput");
+  const teStartInput = document.getElementById("teStartInput");
+  const teEndInput = document.getElementById("teEndInput");
+  const teResultInput = document.getElementById("teResultInput");
+  const teDoneCheck = document.getElementById("teDoneCheck");
+  const teDelete = document.getElementById("teDelete");
+  const teClose = document.getElementById("teClose");
+
+  function getDayTasks(key){
+    if(!data[key]) data[key] = [];
+    return data[key];
+  }
+
+  function renderCalendar(){
+    calTitle.textContent = `${viewYear}년 ${viewMonth+1}월`;
+    calBody.innerHTML = "";
+
+    const firstOfMonth = new Date(viewYear, viewMonth, 1);
+    const startWeekday = firstOfMonth.getDay();
+    const daysInMonth = new Date(viewYear, viewMonth+1, 0).getDate();
+    const daysInPrevMonth = new Date(viewYear, viewMonth, 0).getDate();
+
+    let cells = [];
+    for(let i=startWeekday-1; i>=0; i--){
+      cells.push({ day: daysInPrevMonth - i, other:true, y:viewYear, m:viewMonth-1 });
+    }
+    for(let d=1; d<=daysInMonth; d++){
+      cells.push({ day:d, other:false, y:viewYear, m:viewMonth });
+    }
+    while(cells.length % 7 !== 0){
+      const nextDay = cells.length - (startWeekday + daysInMonth) + 1;
+      cells.push({ day: nextDay, other:true, y:viewYear, m:viewMonth+1 });
+    }
+
+    for(let r=0; r<cells.length/7; r++){
+      const tr = document.createElement("tr");
+      for(let c=0; c<7; c++){
+        const cellInfo = cells[r*7+c];
+        const cellDate = new Date(cellInfo.y, cellInfo.m, cellInfo.day);
+        const key = fmtKey(cellDate);
+        const td = document.createElement("td");
+        const div = document.createElement("div");
+        div.className = "day-cell";
+        if(cellInfo.other) div.classList.add("other-month");
+        if(fmtKey(cellDate) === fmtKey(today)) div.classList.add("is-today");
+        if(fmtKey(cellDate) === fmtKey(selectedDate)) div.classList.add("is-selected");
+        div.textContent = cellInfo.day;
+
+        if(data[key] && data[key].length > 0){
+          const dot = document.createElement("span");
+          dot.className = "dot";
+          div.appendChild(dot);
+        }
+
+        div.addEventListener("click", () => {
+          selectedDate = cellDate;
+          if(cellInfo.other){
+            viewYear = cellDate.getFullYear();
+            viewMonth = cellDate.getMonth();
+          }
+          activeTaskId = null;
+          renderAll();
+        });
+
+        td.appendChild(div);
+        tr.appendChild(td);
+      }
+      calBody.appendChild(tr);
+    }
+  }
+
+  function renderSelectedInfo(){
+    const key = fmtKey(selectedDate);
+    selectedDateLabel.textContent = `${selectedDate.getFullYear()}년 ${selectedDate.getMonth()+1}월 ${selectedDate.getDate()}일`;
+    selectedDateWeekday.textContent = `${WEEKDAYS[selectedDate.getDay()]}요일`;
+
+    const tasks = data[key] || [];
+    sumTotal.textContent = tasks.length;
+    sumDone.textContent = tasks.filter(t => t.done).length;
+  }
+
+  function buildHourAxis(){
+    hourAxis.innerHTML = "";
+    for(let h=0; h<24; h++){
+      const tick = document.createElement("div");
+      tick.className = "hour-tick";
+      tick.textContent = `${String(h).padStart(2,"0")}:00`;
+      hourAxis.appendChild(tick);
+    }
+  }
+
+  function renderTimeline(){
+    const key = fmtKey(selectedDate);
+    const tasks = getDayTasks(key);
+    const isToday = key === fmtKey(today);
+
+    timelineTitle.textContent = isToday
+      ? `오늘 (${selectedDate.getMonth()+1}/${selectedDate.getDate()}) 일정`
+      : `${selectedDate.getMonth()+1}월 ${selectedDate.getDate()}일 (${WEEKDAYS[selectedDate.getDay()]}) 일정`;
+
+    dayTrack.style.height = (HOUR_H*24) + "px";
+    // clear existing task blocks / now-line, keep empty hint node
+    Array.from(dayTrack.querySelectorAll(".task-block, .now-line")).forEach(el => el.remove());
+
+    emptyHint.style.display = tasks.length === 0 ? "block" : "none";
+
+    tasks
+      .slice()
+      .sort((a,b) => timeToMinutes(a.start) - timeToMinutes(b.start))
+      .forEach(task => {
+        const startMin = timeToMinutes(task.start);
+        let endMin = timeToMinutes(task.end);
+        if(endMin <= startMin) endMin = startMin + 30;
+        const top = (startMin/60)*HOUR_H;
+        const height = Math.max(((endMin-startMin)/60)*HOUR_H, 28);
+
+        const block = document.createElement("div");
+        block.className = "task-block" + (task.done ? " is-done" : "");
+        block.style.top = top + "px";
+        block.style.height = height + "px";
+        block.dataset.id = task.id;
+
+        const timeEl = document.createElement("div");
+        timeEl.className = "tb-time";
+        timeEl.textContent = `${task.start} ~ ${task.end}`;
+
+        const titleEl = document.createElement("div");
+        titleEl.className = "tb-title";
+        titleEl.textContent = task.title || "(제목 없음)";
+
+        block.appendChild(timeEl);
+        block.appendChild(titleEl);
+
+        if(height > 50 && task.result && task.result.trim() !== ""){
+          const resultEl = document.createElement("div");
+          resultEl.className = "tb-result-preview";
+          resultEl.textContent = "📝 " + task.result;
+          block.appendChild(resultEl);
+        }
+
+        block.addEventListener("click", () => {
+          activeTaskId = task.id;
+          openTaskEditor(task);
+        });
+
+        dayTrack.appendChild(block);
+      });
+
+    if(isToday){
+      const now = new Date();
+      const nowMin = now.getHours()*60 + now.getMinutes();
+      const nowLine = document.createElement("div");
+      nowLine.className = "now-line";
+      nowLine.style.top = (nowMin/60)*HOUR_H + "px";
+      dayTrack.appendChild(nowLine);
+    }
+
+    if(activeTaskId){
+      const stillExists = tasks.find(t => t.id === activeTaskId);
+      if(stillExists){
+        openTaskEditor(stillExists, true);
+      } else {
+        closeTaskEditor();
+      }
+    }
+  }
+
+  function openTaskEditor(task, silent){
+    activeTaskId = task.id;
+    teTitleDisplay.textContent = task.title || "(제목 없음)";
+    teTimeDisplay.textContent = `${task.start} ~ ${task.end}`;
+    teTitleInput.value = task.title || "";
+    teStartInput.value = task.start;
+    teEndInput.value = task.end;
+    teResultInput.value = task.result || "";
+    teDoneCheck.checked = !!task.done;
+    taskEditor.classList.add("open");
+    if(!silent){
+      taskEditor.scrollIntoView({ behavior:"smooth", block:"nearest" });
+    }
+  }
+  function closeTaskEditor(){
+    activeTaskId = null;
+    taskEditor.classList.remove("open");
+  }
+
+  function findActiveTask(){
+    const key = fmtKey(selectedDate);
+    const tasks = getDayTasks(key);
+    return tasks.find(t => t.id === activeTaskId);
+  }
+
+  function commitTaskEdits(){
+    const task = findActiveTask();
+    if(!task) return;
+    task.title = teTitleInput.value;
+    task.start = teStartInput.value || task.start;
+    task.end = teEndInput.value || task.end;
+    task.result = teResultInput.value;
+    task.done = teDoneCheck.checked;
+    saveData(data);
+    renderTimeline();
+    renderSelectedInfo();
+    renderCalendar();
+    // keep editor open with refreshed header text
+    const refreshed = findActiveTask();
+    if(refreshed){
+      teTitleDisplay.textContent = refreshed.title || "(제목 없음)";
+      teTimeDisplay.textContent = `${refreshed.start} ~ ${refreshed.end}`;
+      taskEditor.classList.add("open");
+    }
+  }
+
+  [teTitleInput, teStartInput, teEndInput, teResultInput].forEach(el => {
+    el.addEventListener("change", commitTaskEdits);
+  });
+  teResultInput.addEventListener("input", () => {
+    // live-save result text without losing focus / re-render blocking typing
+    const task = findActiveTask();
+    if(task){
+      task.result = teResultInput.value;
+      saveData(data);
+    }
+  });
+  teDoneCheck.addEventListener("change", commitTaskEdits);
+
+  teDelete.addEventListener("click", () => {
+    const key = fmtKey(selectedDate);
+    const tasks = getDayTasks(key);
+    const idx = tasks.findIndex(t => t.id === activeTaskId);
+    if(idx > -1){
+      tasks.splice(idx,1);
+      saveData(data);
+    }
+    closeTaskEditor();
+    renderTimeline();
+    renderSelectedInfo();
+    renderCalendar();
+  });
+
+  teClose.addEventListener("click", () => {
+    closeTaskEditor();
+    renderTimeline();
+  });
+
+  openAddFormBtn.addEventListener("click", () => {
+    addForm.classList.add("open");
+    newTitle.focus();
+  });
+  cancelAddFormBtn.addEventListener("click", () => {
+    addForm.classList.remove("open");
+    newTitle.value = "";
+  });
+  submitAddFormBtn.addEventListener("click", () => {
+    const start = newStart.value;
+    const end = newEnd.value;
+    const title = newTitle.value.trim();
+    if(!start || !end){
+      alert("시작 시간과 종료 시간을 입력하세요.");
+      return;
+    }
+    if(!title){
+      alert("일정 내용을 입력하세요.");
+      return;
+    }
+    if(timeToMinutes(end) <= timeToMinutes(start)){
+      alert("종료 시간은 시작 시간보다 늦어야 합니다.");
+      return;
+    }
+    const key = fmtKey(selectedDate);
+    const tasks = getDayTasks(key);
+    tasks.push({
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2,7),
+      start, end, title,
+      result: "",
+      done: false
+    });
+    saveData(data);
+
+    newTitle.value = "";
+    addForm.classList.remove("open");
+
+    renderTimeline();
+    renderSelectedInfo();
+    renderCalendar();
+  });
+
+  function renderAll(){
+    renderCalendar();
+    renderSelectedInfo();
+    renderTimeline();
+  }
+
+  document.getElementById("prevMonth").addEventListener("click", () => {
+    viewMonth--;
+    if(viewMonth < 0){ viewMonth = 11; viewYear--; }
+    renderCalendar();
+  });
+  document.getElementById("nextMonth").addEventListener("click", () => {
+    viewMonth++;
+    if(viewMonth > 11){ viewMonth = 0; viewYear++; }
+    renderCalendar();
+  });
+  document.getElementById("gotoToday").addEventListener("click", () => {
+    today = todayDate();
+    viewYear = today.getFullYear();
+    viewMonth = today.getMonth();
+    selectedDate = new Date(today);
+    activeTaskId = null;
+    renderAll();
+  });
+
+  function updateClock(){
+    const now = new Date();
+    const hh = String(now.getHours()).padStart(2,"0");
+    const mm = String(now.getMinutes()).padStart(2,"0");
+    clockEl.textContent = `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,"0")}.${String(now.getDate()).padStart(2,"0")} ${hh}:${mm}`;
+  }
+  updateClock();
+  setInterval(updateClock, 1000*30);
+
+  setInterval(() => {
+    const newToday = todayDate();
+    if(fmtKey(newToday) !== fmtKey(today)){
+      today = newToday;
+    }
+    renderTimeline();
+    renderCalendar();
+  }, 1000*60);
+
+  buildHourAxis();
+  renderAll();
+})();
+</script>
+
+</body>
+</html>

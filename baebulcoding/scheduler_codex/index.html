@@ -1,0 +1,738 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>내 스케줄러</title>
+  <style>
+    :root {
+      --bg: #f6f7f9;
+      --panel: #ffffff;
+      --ink: #20252d;
+      --muted: #6d7480;
+      --line: #dde2e8;
+      --soft: #eef3f7;
+      --accent: #1f7a8c;
+      --accent-strong: #155e6c;
+      --today: #fff2cc;
+      --selected: #dceef2;
+      --shadow: 0 16px 40px rgba(25, 33, 46, 0.08);
+      font-family: Arial, "Malgun Gothic", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--ink);
+    }
+
+    .app {
+      width: min(1440px, 100%);
+      min-height: 100vh;
+      margin: 0 auto;
+      padding: 28px;
+      display: grid;
+      grid-template-columns: minmax(360px, 0.85fr) minmax(520px, 1.15fr);
+      gap: 22px;
+    }
+
+    .calendar-pane,
+    .day-pane {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      min-width: 0;
+    }
+
+    .calendar-pane {
+      padding: 22px;
+      align-self: start;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .brand {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      min-width: 0;
+    }
+
+    h1,
+    h2 {
+      margin: 0;
+      letter-spacing: 0;
+    }
+
+    h1 {
+      font-size: 25px;
+      line-height: 1.2;
+    }
+
+    .today-text {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    .month-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 0 0 auto;
+    }
+
+    button {
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--ink);
+      border-radius: 6px;
+      min-height: 38px;
+      padding: 0 12px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      border-color: var(--accent);
+      color: var(--accent-strong);
+    }
+
+    .icon-button {
+      width: 38px;
+      padding: 0;
+      font-size: 19px;
+      line-height: 1;
+    }
+
+    .month-title {
+      margin: 18px 0 14px;
+      font-size: 22px;
+      font-weight: 700;
+    }
+
+    .weekdays,
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+    }
+
+    .weekdays {
+      border-bottom: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .weekday {
+      padding: 10px 0;
+    }
+
+    .calendar-grid {
+      gap: 6px;
+      padding-top: 12px;
+    }
+
+    .date-cell {
+      aspect-ratio: 1 / 0.88;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      padding: 8px;
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: space-between;
+      min-width: 0;
+      cursor: pointer;
+    }
+
+    .date-cell:hover {
+      background: var(--soft);
+    }
+
+    .date-cell.muted {
+      color: #b1b7bf;
+      background: #fafbfc;
+    }
+
+    .date-cell.today {
+      background: var(--today);
+      border-color: #e6c95a;
+    }
+
+    .date-cell.selected {
+      background: var(--selected);
+      border-color: var(--accent);
+    }
+
+    .date-number {
+      font-weight: 700;
+      font-size: 15px;
+    }
+
+    .dot-row {
+      display: flex;
+      gap: 3px;
+      max-width: 100%;
+      min-height: 7px;
+    }
+
+    .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+
+    .day-pane {
+      display: flex;
+      flex-direction: column;
+      min-height: calc(100vh - 56px);
+    }
+
+    .day-header {
+      padding: 22px 24px 18px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      align-items: center;
+    }
+
+    .day-heading {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      min-width: 0;
+    }
+
+    .day-heading h2 {
+      font-size: 24px;
+      line-height: 1.2;
+    }
+
+    .day-subtitle {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .day-board {
+      overflow: auto;
+      padding: 20px 24px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .add-form {
+      display: grid;
+      grid-template-columns: 132px minmax(220px, 1fr) auto;
+      gap: 12px;
+      align-items: end;
+      padding: 16px;
+      background: #f9fbfc;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+
+    .field-block {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      min-width: 0;
+    }
+
+    label {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    input[type="time"],
+    textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 10px;
+      font: inherit;
+      line-height: 1.35;
+      color: var(--ink);
+      background: #fff;
+    }
+
+    input[type="time"] {
+      height: 42px;
+    }
+
+    textarea {
+      min-height: 54px;
+      resize: vertical;
+    }
+
+    input[type="time"]:focus,
+    textarea:focus {
+      outline: 2px solid rgba(31, 122, 140, 0.16);
+      border-color: var(--accent);
+    }
+
+    .primary-button {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+      min-width: 104px;
+      height: 42px;
+      font-weight: 700;
+    }
+
+    .primary-button:hover {
+      background: var(--accent-strong);
+      border-color: var(--accent-strong);
+      color: #fff;
+    }
+
+    .schedule-list {
+      min-height: 420px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 8px 16px;
+    }
+
+    .schedule-empty {
+      min-height: 220px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted);
+      text-align: center;
+      line-height: 1.5;
+    }
+
+    .schedule-item {
+      display: grid;
+      grid-template-columns: 82px minmax(180px, 1fr) minmax(180px, 1fr) auto;
+      gap: 12px;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--line);
+      align-items: start;
+    }
+
+    .schedule-item:last-child {
+      border-bottom: 0;
+    }
+
+    .schedule-time {
+      color: var(--accent-strong);
+      font-weight: 800;
+      padding-top: 28px;
+      white-space: nowrap;
+    }
+
+    .delete-button {
+      width: 38px;
+      min-width: 38px;
+      padding: 0;
+      margin-top: 25px;
+      color: #9a2f2f;
+    }
+
+    .status {
+      min-height: 20px;
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 14px;
+    }
+
+    @media (max-width: 980px) {
+      .app {
+        grid-template-columns: 1fr;
+        padding: 16px;
+      }
+
+      .day-pane {
+        min-height: 70vh;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .topbar,
+      .day-header {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .calendar-pane {
+        padding: 16px;
+      }
+
+      .date-cell {
+        padding: 6px;
+        border-radius: 6px;
+      }
+
+      .date-number {
+        font-size: 13px;
+      }
+
+      .add-form,
+      .schedule-item {
+        grid-template-columns: 1fr;
+        gap: 8px;
+      }
+
+      .schedule-time,
+      .delete-button {
+        padding-top: 0;
+        margin-top: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <section class="calendar-pane" aria-label="월간 달력">
+      <div class="topbar">
+        <div class="brand">
+          <h1>내 스케줄러</h1>
+          <div class="today-text" id="todayText"></div>
+        </div>
+        <div class="month-controls">
+          <button class="icon-button" id="prevMonth" type="button" aria-label="이전 달" title="이전 달">&lsaquo;</button>
+          <button id="goToday" type="button">오늘</button>
+          <button class="icon-button" id="nextMonth" type="button" aria-label="다음 달" title="다음 달">&rsaquo;</button>
+        </div>
+      </div>
+
+      <div class="month-title" id="monthTitle"></div>
+      <div class="weekdays" aria-hidden="true">
+        <div class="weekday">일</div>
+        <div class="weekday">월</div>
+        <div class="weekday">화</div>
+        <div class="weekday">수</div>
+        <div class="weekday">목</div>
+        <div class="weekday">금</div>
+        <div class="weekday">토</div>
+      </div>
+      <div class="calendar-grid" id="calendarGrid"></div>
+      <div class="status" id="saveStatus" aria-live="polite"></div>
+    </section>
+
+    <section class="day-pane" aria-label="선택한 날짜 시간표">
+      <header class="day-header">
+        <div class="day-heading">
+          <h2 id="selectedDayTitle"></h2>
+          <div class="day-subtitle" id="selectedDaySubtitle"></div>
+        </div>
+        <button id="clearDay" type="button">선택 날짜 비우기</button>
+      </header>
+      <div class="day-board">
+        <form class="add-form" id="addForm">
+          <div class="field-block">
+            <label for="newTime">시간</label>
+            <input id="newTime" type="time" required>
+          </div>
+          <div class="field-block">
+            <label for="newPlan">일정</label>
+            <textarea id="newPlan" placeholder="등록할 할일을 적어주세요" required></textarea>
+          </div>
+          <button class="primary-button" type="submit">할일 등록</button>
+        </form>
+        <div class="schedule-list" id="scheduleList"></div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const state = {
+      today: startOfDay(new Date()),
+      selectedDate: startOfDay(new Date()),
+      visibleYear: new Date().getFullYear(),
+      visibleMonth: new Date().getMonth(),
+      data: loadData()
+    };
+
+    const calendarGrid = document.getElementById("calendarGrid");
+    const monthTitle = document.getElementById("monthTitle");
+    const todayText = document.getElementById("todayText");
+    const selectedDayTitle = document.getElementById("selectedDayTitle");
+    const selectedDaySubtitle = document.getElementById("selectedDaySubtitle");
+    const addForm = document.getElementById("addForm");
+    const newTime = document.getElementById("newTime");
+    const newPlan = document.getElementById("newPlan");
+    const scheduleList = document.getElementById("scheduleList");
+    const saveStatus = document.getElementById("saveStatus");
+
+    document.getElementById("prevMonth").addEventListener("click", () => changeMonth(-1));
+    document.getElementById("nextMonth").addEventListener("click", () => changeMonth(1));
+    document.getElementById("goToday").addEventListener("click", selectToday);
+    document.getElementById("clearDay").addEventListener("click", clearSelectedDay);
+    addForm.addEventListener("submit", addSchedule);
+
+    render();
+
+    function startOfDay(date) {
+      return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    }
+
+    function formatKey(date) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    }
+
+    function formatKoreanDate(date) {
+      return new Intl.DateTimeFormat("ko-KR", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+        weekday: "long"
+      }).format(date);
+    }
+
+    function loadData() {
+      try {
+        return JSON.parse(localStorage.getItem("my-scheduler-data")) || {};
+      } catch {
+        return {};
+      }
+    }
+
+    function saveData() {
+      localStorage.setItem("my-scheduler-data", JSON.stringify(state.data));
+      saveStatus.textContent = "저장됨";
+      window.clearTimeout(saveData.timer);
+      saveData.timer = window.setTimeout(() => {
+        saveStatus.textContent = "";
+      }, 1200);
+    }
+
+    function changeMonth(amount) {
+      const next = new Date(state.visibleYear, state.visibleMonth + amount, 1);
+      state.visibleYear = next.getFullYear();
+      state.visibleMonth = next.getMonth();
+      renderCalendar();
+    }
+
+    function selectToday() {
+      state.selectedDate = startOfDay(new Date());
+      state.today = startOfDay(new Date());
+      state.visibleYear = state.selectedDate.getFullYear();
+      state.visibleMonth = state.selectedDate.getMonth();
+      render();
+    }
+
+    function selectDate(date) {
+      state.selectedDate = startOfDay(date);
+      state.visibleYear = date.getFullYear();
+      state.visibleMonth = date.getMonth();
+      render();
+    }
+
+    function clearSelectedDay() {
+      const key = formatKey(state.selectedDate);
+      if (!state.data[key]) return;
+      if (!confirm(`${formatKoreanDate(state.selectedDate)}의 일정과 결과를 모두 지울까요?`)) return;
+      delete state.data[key];
+      saveData();
+      render();
+    }
+
+    function render() {
+      state.today = startOfDay(new Date());
+      todayText.textContent = `오늘 날짜: ${formatKoreanDate(state.today)}`;
+      renderCalendar();
+      renderDay();
+    }
+
+    function renderCalendar() {
+      calendarGrid.innerHTML = "";
+      monthTitle.textContent = `${state.visibleYear}년 ${state.visibleMonth + 1}월`;
+
+      const firstDay = new Date(state.visibleYear, state.visibleMonth, 1);
+      const gridStart = new Date(firstDay);
+      gridStart.setDate(firstDay.getDate() - firstDay.getDay());
+
+      for (let i = 0; i < 42; i += 1) {
+        const date = new Date(gridStart);
+        date.setDate(gridStart.getDate() + i);
+
+        const key = formatKey(date);
+        const cell = document.createElement("button");
+        cell.type = "button";
+        cell.className = "date-cell";
+        if (date.getMonth() !== state.visibleMonth) cell.classList.add("muted");
+        if (key === formatKey(state.today)) cell.classList.add("today");
+        if (key === formatKey(state.selectedDate)) cell.classList.add("selected");
+        cell.setAttribute("aria-label", formatKoreanDate(date));
+        cell.addEventListener("click", () => selectDate(date));
+
+        const number = document.createElement("span");
+        number.className = "date-number";
+        number.textContent = date.getDate();
+
+        const dots = document.createElement("span");
+        dots.className = "dot-row";
+        const count = countScheduledItems(key);
+        for (let dotIndex = 0; dotIndex < Math.min(count, 3); dotIndex += 1) {
+          const dot = document.createElement("span");
+          dot.className = "dot";
+          dots.appendChild(dot);
+        }
+
+        cell.append(number, dots);
+        calendarGrid.appendChild(cell);
+      }
+    }
+
+    function renderDay() {
+      const key = formatKey(state.selectedDate);
+      const dayData = state.data[key] || {};
+      selectedDayTitle.textContent = formatKoreanDate(state.selectedDate);
+      selectedDaySubtitle.textContent = key === formatKey(state.today)
+        ? "오늘 하루의 일정"
+        : "선택한 날짜의 하루 일정";
+
+      scheduleList.innerHTML = "";
+      const items = normalizeDayItems(dayData);
+      if (items.length === 0) {
+        const empty = document.createElement("div");
+        empty.className = "schedule-empty";
+        empty.textContent = "등록된 할일이 없습니다. 위에서 시간과 일정을 입력해 주세요.";
+        scheduleList.appendChild(empty);
+        return;
+      }
+
+      items
+        .sort((a, b) => a.time.localeCompare(b.time))
+        .forEach(item => {
+          const row = document.createElement("div");
+          row.className = "schedule-item";
+
+          const time = document.createElement("div");
+          time.className = "schedule-time";
+          time.textContent = item.time;
+
+          const planBlock = createTextBlock({
+            labelText: "일정",
+            value: item.plan || "",
+            placeholder: "할일을 적어두세요",
+            onInput: value => updateSchedule(key, item.id, "plan", value)
+          });
+
+          const resultBlock = createTextBlock({
+            labelText: "실행 결과",
+            value: item.result || "",
+          placeholder: "실행 후 결과나 메모를 기록하세요",
+            onInput: value => updateSchedule(key, item.id, "result", value)
+          });
+
+          const deleteButton = document.createElement("button");
+          deleteButton.type = "button";
+          deleteButton.className = "delete-button";
+          deleteButton.textContent = "×";
+          deleteButton.setAttribute("aria-label", "일정 삭제");
+          deleteButton.title = "일정 삭제";
+          deleteButton.addEventListener("click", () => deleteSchedule(key, item.id));
+
+          row.append(time, planBlock, resultBlock, deleteButton);
+          scheduleList.appendChild(row);
+        });
+    }
+
+    function createTextBlock({ labelText, value, placeholder, onInput }) {
+      const block = document.createElement("div");
+      block.className = "field-block";
+
+      const label = document.createElement("label");
+      label.textContent = labelText;
+
+      const textarea = document.createElement("textarea");
+      textarea.value = value;
+      textarea.placeholder = placeholder;
+      textarea.addEventListener("input", event => onInput(event.target.value));
+
+      block.append(label, textarea);
+      return block;
+    }
+
+    function addSchedule(event) {
+      event.preventDefault();
+      const dateKey = formatKey(state.selectedDate);
+      const plan = newPlan.value.trim();
+      if (!newTime.value || !plan) return;
+
+      state.data[dateKey] = normalizeDayItems(state.data[dateKey]);
+      state.data[dateKey].push({
+        id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+        time: newTime.value,
+        plan,
+        result: ""
+      });
+
+      newPlan.value = "";
+      saveData();
+      render();
+      newPlan.focus();
+    }
+
+    function updateSchedule(dateKey, itemId, field, value) {
+      state.data[dateKey] = normalizeDayItems(state.data[dateKey]);
+      const item = state.data[dateKey].find(schedule => schedule.id === itemId);
+      if (!item) return;
+      item[field] = value;
+
+      if (!item.plan && !item.result) {
+        state.data[dateKey] = state.data[dateKey].filter(schedule => schedule.id !== itemId);
+      }
+      if (state.data[dateKey].length === 0) {
+        delete state.data[dateKey];
+      }
+
+      saveData();
+      renderCalendar();
+    }
+
+    function deleteSchedule(dateKey, itemId) {
+      state.data[dateKey] = normalizeDayItems(state.data[dateKey])
+        .filter(schedule => schedule.id !== itemId);
+      if (state.data[dateKey].length === 0) {
+        delete state.data[dateKey];
+      }
+      saveData();
+      render();
+    }
+
+    function normalizeDayItems(day) {
+      if (!day) return [];
+      if (Array.isArray(day)) return day;
+      return Object.entries(day)
+        .filter(([, item]) => item && (item.plan || item.result))
+        .map(([hour, item]) => ({
+          id: item.id || `${hour}-${Math.random().toString(16).slice(2)}`,
+          time: `${hour.padStart(2, "0")}:00`,
+          plan: item.plan || "",
+          result: item.result || ""
+        }));
+    }
+
+    function countScheduledItems(dateKey) {
+      return normalizeDayItems(state.data[dateKey]).length;
+    }
+  </script>
+</body>
+</html>
