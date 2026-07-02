@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>배불뚝이 코딩 · EP.04 전용 프로그램 설치</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0A0D16;
+  --bg-2:#0F1420;
+  --panel:#141A28;
+  --panel-2:#1B2233;
+  --panel-border:rgba(244,241,234,0.10);
+  --ink:#F4F1EA;
+  --ink-dim:#9AA1BA;
+  --ink-faint:#5E6580;
+  --amber:#FFB648;
+  --amber-dim:#8A6A33;
+  --claude:#D97757;
+  --codex:#2FBF8F;
+  --anti:#5B8DEF;
+  --danger:#FF6B6B;
+  --radius-lg:22px;
+  --radius-md:14px;
+  --radius-sm:8px;
+  --font-display:'Noto Sans KR', sans-serif;
+  --font-body:'Noto Sans KR', sans-serif;
+  --font-mono:'JetBrains Mono', monospace;
+  --accent:#FFB648;
+}
+*{box-sizing:border-box;}
+html,body{height:100%;margin:0;}
+body{
+  background:
+    radial-gradient(circle at 15% 10%, rgba(91,141,239,0.10), transparent 45%),
+    radial-gradient(circle at 85% 85%, rgba(217,119,87,0.10), transparent 45%),
+    var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  overflow:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+::selection{background:var(--amber);color:#1a1206;}
+
+#app{height:100vh;height:100dvh;display:flex;flex-direction:column;position:relative;}
+
+/* ---------- global progress ---------- */
+.global-progress{height:3px;width:100%;background:var(--panel-border);flex:0 0 auto;}
+.global-progress-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--amber),var(--claude));transition:width .35s ease;}
+
+/* ---------- top bar ---------- */
+.topbar{
+  flex:0 0 auto;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 22px;
+  border-bottom:1px solid var(--panel-border);
+  background:rgba(10,13,22,0.7);
+  backdrop-filter:blur(6px);
+  gap:16px;
+}
+.brand{display:flex;align-items:baseline;gap:10px;font-family:var(--font-display);font-weight:900;font-size:17px;letter-spacing:.5px;color:var(--ink);white-space:nowrap;}
+.brand span{font-family:var(--font-body);font-weight:500;font-size:11px;color:var(--ink-dim);letter-spacing:.3px;}
+.act-dots{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:2px;}
+.act-dots::-webkit-scrollbar{display:none;}
+.act-dot{
+  flex:0 0 auto;width:9px;height:9px;border-radius:50%;
+  background:var(--panel-2);border:1px solid var(--panel-border);
+  cursor:pointer;transition:all .25s ease;
+}
+.act-dot:hover{transform:scale(1.3);}
+.act-dot.done{background:var(--ink-faint);}
+.act-dot.active{
+  width:22px;border-radius:6px;
+  background:var(--accent-dot,var(--amber));
+  box-shadow:0 0 10px var(--accent-dot,var(--amber));
+}
+
+/* ---------- stage ---------- */
+.stage-wrap{flex:1 1 auto;position:relative;overflow:hidden;}
+.stage{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:26px 8vw 300px;
+  overflow:hidden;
+}
+.stage-inner{width:100%;max-width:1080px;display:flex;flex-direction:column;align-items:center;gap:18px;animation:stageIn .5s ease both;}
+@keyframes stageIn{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
+
+.eyebrow-badge{
+  font-family:var(--font-mono);font-size:11px;letter-spacing:1.5px;
+  color:var(--accent);border:1px solid var(--accent);
+  padding:4px 12px;border-radius:999px;text-transform:uppercase;
+  background:color-mix(in srgb, var(--accent) 12%, transparent);
+  white-space:nowrap;
+}
+.headline{
+  font-family:var(--font-display);
+  font-weight:900;
+  font-size:clamp(22px,3.4vw,40px);
+  line-height:1.35;text-align:center;color:var(--ink);
+  letter-spacing:.2px;
+  max-width:900px;
+}
+.headline .hl{color:var(--accent);}
+
+/* nav buttons */
+.nav-btn{
+  position:absolute;top:50%;transform:translateY(-50%);
+  width:46px;height:46px;border-radius:50%;
+  background:rgba(20,26,40,0.75);border:1px solid var(--panel-border);
+  color:var(--ink);font-size:22px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .2s ease;backdrop-filter:blur(4px);z-index:20;
+}
+.nav-btn:hover{background:var(--accent);color:#0A0D16;transform:translateY(-50%) scale(1.08);}
+.nav-prev{left:16px;} .nav-next{right:16px;}
+.click-zone{position:absolute;top:0;bottom:0;width:18%;z-index:5;cursor:pointer;}
+.click-zone.left{left:0;} .click-zone.right{right:0;}
+
+/* ---------- caption bar ---------- */
+.caption-bar{
+  --cap-h:150px;
+  position:absolute;left:0;right:0;
+  bottom:var(--cap-h);
+  height:var(--cap-h);
+  padding:14px 24px 10px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
+  z-index:15;
+  pointer-events:none;
+}
+.caption-bar > *{pointer-events:auto;}
+.caption-eyebrow{font-family:var(--font-mono);font-size:10.5px;color:var(--ink-faint);letter-spacing:1.2px;text-transform:uppercase;}
+.caption-card{
+  width:100%;max-width:820px;
+  background:var(--panel);
+  border:1px solid var(--panel-border);
+  border-left:4px solid var(--accent);
+  border-radius:var(--radius-md);
+  padding:16px 28px;
+  box-shadow:0 10px 30px rgba(0,0,0,.35);
+  display:flex;align-items:center;justify-content:center;
+  transition:border-color .3s ease;
+}
+.caption-text{
+  font-size:clamp(15px,2.1vw,21px);
+  font-weight:700;line-height:1.55;text-align:center;
+  color:var(--ink);
+  min-height:1.55em;
+}
+.caption-text.enter{animation:capIn .32s ease both;}
+@keyframes capIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+.caption-meta{display:flex;align-items:center;gap:10px;width:100%;max-width:420px;}
+.caption-progress{flex:1;height:3px;background:var(--panel-2);border-radius:2px;overflow:hidden;}
+.caption-progress-fill{height:100%;background:var(--accent);transition:width .3s ease;}
+.caption-count{font-family:var(--font-mono);font-size:11px;color:var(--ink-faint);white-space:nowrap;}
+
+/* ---------- shared components ---------- */
+.panel{background:var(--panel);border:1px solid var(--panel-border);border-radius:var(--radius-lg);}
+.chip{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:5px 12px;border-radius:999px;font-size:12px;font-weight:600;
+  background:var(--panel-2);border:1px solid var(--panel-border);color:var(--ink-dim);
+}
+.chip.solid{background:var(--accent);color:#0A0D16;border-color:var(--accent);}
+.pulse{animation:pulse 1.8s ease-in-out infinite;}
+@keyframes pulse{0%,100%{transform:scale(1);}50%{transform:scale(1.08);}}
+.float{animation:floaty 3.2s ease-in-out infinite;}
+@keyframes floaty{0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
+.spin-slow{animation:spinSlow 6s linear infinite;}
+@keyframes spinSlow{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+
+/* === HOOK === */
+.hook-diagram{display:flex;align-items:center;justify-content:center;gap:22px;flex-wrap:wrap;margin-top:6px;}
+.browser-cluster{position:relative;display:flex;gap:8px;padding:16px 20px;background:var(--panel);border:1px solid var(--panel-border);border-radius:var(--radius-md);}
+.tab-chip{width:30px;height:30px;border-radius:6px;background:var(--panel-2);display:flex;align-items:center;justify-content:center;font-size:15px;opacity:.55;animation:shake 2.4s ease-in-out infinite;animation-delay:calc(var(--d) * .12s);}
+@keyframes shake{0%,100%{transform:rotate(0deg);}20%{transform:rotate(-6deg);}40%{transform:rotate(5deg);}60%{transform:rotate(-3deg);}80%{transform:rotate(2deg);}}
+.big-x{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:46px;color:var(--danger);text-shadow:0 0 18px var(--danger);}
+.diagram-arrow{font-size:26px;color:var(--ink-faint);}
+.app-cluster{display:flex;gap:12px;}
+.app-glyph{
+  width:56px;height:56px;border-radius:16px;display:flex;align-items:center;justify-content:center;
+  font-size:26px;box-shadow:0 0 22px currentColor;
+}
+.app-glyph.claude{background:color-mix(in srgb, var(--claude) 22%, var(--panel));color:var(--claude);border:1px solid var(--claude);}
+.app-glyph.codex{background:color-mix(in srgb, var(--codex) 22%, var(--panel));color:var(--codex);border:1px solid var(--codex);}
+.app-glyph.anti{background:color-mix(in srgb, var(--anti) 22%, var(--panel));color:var(--anti);border:1px solid var(--anti);}
+
+/* === TARGET === */
+.tag-cloud{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;max-width:620px;margin-top:4px;}
+.tag-cloud span{
+  font-family:var(--font-mono);font-size:13px;color:var(--ink-faint);
+  border:1px dashed var(--panel-border);padding:5px 10px;border-radius:8px;
+  animation:floaty 3s ease-in-out infinite;
+}
+.warn-icon{font-size:52px;filter:drop-shadow(0 0 16px var(--danger));}
+
+/* === GREETING === */
+.host-card{display:flex;align-items:center;gap:22px;padding:26px 34px;}
+.host-avatar{
+  width:88px;height:88px;border-radius:50%;
+  background:linear-gradient(145deg, var(--claude), var(--anti));
+  display:flex;align-items:center;justify-content:center;font-size:38px;
+  box-shadow:0 0 30px rgba(217,119,87,.4);
+  flex:0 0 auto;
+}
+.host-meta h3{margin:0 0 4px;font-family:var(--font-display);font-weight:900;font-size:20px;}
+.host-meta p{margin:0;color:var(--ink-dim);font-size:13px;}
+.dog-badge{
+  position:absolute;bottom:14px;right:18px;display:flex;align-items:center;gap:6px;
+  background:var(--panel-2);border:1px solid var(--panel-border);border-radius:999px;
+  padding:6px 12px;font-size:12px;color:var(--ink-dim);
+}
+.dog-badge .paw{display:inline-block;animation:wag 1s ease-in-out infinite;transform-origin:bottom center;}
+@keyframes wag{0%,100%{transform:rotate(-12deg);}50%{transform:rotate(12deg);}}
+
+/* === ERA TIMELINE === */
+.era-timeline{width:100%;display:flex;flex-direction:column;gap:22px;margin-top:4px;}
+.era-track{position:relative;display:flex;justify-content:space-between;padding:0 10px;}
+.era-line{position:absolute;top:19px;left:30px;right:30px;height:2px;background:var(--panel-border);z-index:0;}
+.era-line-fill{position:absolute;top:19px;left:30px;height:2px;background:var(--accent);z-index:1;transition:width .4s ease;}
+.era-stop{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;gap:8px;flex:1;}
+.era-dot{width:38px;height:38px;border-radius:50%;background:var(--panel);border:2px solid var(--panel-border);display:flex;align-items:center;justify-content:center;font-size:17px;transition:all .3s ease;color:var(--ink-faint);}
+.era-stop.active .era-dot{border-color:var(--accent);background:var(--accent);color:#0A0D16;box-shadow:0 0 18px var(--accent);transform:scale(1.15);}
+.era-stop.past .era-dot{border-color:var(--accent);color:var(--accent);}
+.era-label{font-size:11.5px;color:var(--ink-faint);text-align:center;max-width:120px;}
+.era-stop.active .era-label{color:var(--ink);font-weight:700;}
+.era-tagbox{text-align:center;padding:16px 22px;min-width:280px;}
+.era-tagbox .tag{font-family:var(--font-mono);font-size:12px;color:var(--accent);margin-bottom:6px;}
+.era-tagbox .desc{font-size:15px;font-weight:600;}
+
+/* === ROSTER === */
+.roster-row{display:flex;gap:20px;justify-content:center;flex-wrap:wrap;}
+.roster-card{
+  width:210px;padding:22px 18px;text-align:center;position:relative;overflow:hidden;
+  animation:cardIn .6s ease both;
+}
+.roster-card:nth-child(1){animation-delay:.05s;} .roster-card:nth-child(2){animation-delay:.2s;} .roster-card:nth-child(3){animation-delay:.35s;}
+@keyframes cardIn{from{opacity:0;transform:translateY(20px) rotateY(90deg);}to{opacity:1;transform:translateY(0) rotateY(0);}}
+.roster-glyph{width:64px;height:64px;border-radius:18px;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-size:30px;}
+.roster-card h4{font-family:var(--font-display);font-weight:900;font-size:17px;margin:0 0 4px;}
+.roster-card p{font-size:12px;color:var(--ink-dim);margin:0;}
+.roster-num{position:absolute;top:10px;left:12px;font-family:var(--font-mono);font-size:11px;color:var(--ink-faint);}
+
+/* === FEATURE CARD (overview) === */
+.persona-head{display:flex;align-items:center;gap:14px;}
+.persona-glyph{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;flex:0 0 auto;}
+.persona-name{font-family:var(--font-display);font-weight:900;font-size:22px;}
+.persona-tag{font-size:12.5px;color:var(--ink-dim);}
+.bullet-grid{width:100%;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin-top:6px;}
+.bullet-card{padding:14px 16px;display:flex;flex-direction:column;gap:6px;animation:bulletIn .5s ease both;}
+.bullet-card:nth-child(1){animation-delay:.05s;}.bullet-card:nth-child(2){animation-delay:.15s;}.bullet-card:nth-child(3){animation-delay:.25s;}.bullet-card:nth-child(4){animation-delay:.35s;}.bullet-card:nth-child(5){animation-delay:.45s;}
+@keyframes bulletIn{from{opacity:0;transform:translateX(-10px);}to{opacity:1;transform:translateX(0);}}
+.bullet-label{font-size:10.5px;font-weight:700;color:var(--accent);letter-spacing:.5px;}
+.bullet-text{font-size:12.5px;line-height:1.55;color:var(--ink-dim);}
+
+/* === INSTALL STAGE === */
+.step-pills{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;}
+.step-pill{
+  font-size:11px;padding:5px 10px;border-radius:999px;background:var(--panel-2);
+  color:var(--ink-faint);border:1px solid var(--panel-border);transition:all .25s ease;white-space:nowrap;
+}
+.step-pill.active{background:var(--accent);color:#0A0D16;border-color:var(--accent);font-weight:700;}
+.mock-window{width:100%;max-width:640px;border-radius:var(--radius-md);overflow:hidden;border:1px solid var(--panel-border);background:var(--panel);}
+.mock-titlebar{display:flex;align-items:center;gap:6px;padding:9px 12px;background:var(--panel-2);}
+.mock-dot{width:9px;height:9px;border-radius:50%;background:var(--ink-faint);}
+.mock-addr{flex:1;margin-left:10px;background:var(--bg);border-radius:6px;padding:4px 10px;font-size:11px;color:var(--ink-faint);font-family:var(--font-mono);}
+.mock-body{padding:26px;display:flex;flex-direction:column;align-items:center;gap:12px;min-height:150px;justify-content:center;}
+.mock-body .big-emoji{font-size:40px;}
+.mock-note{font-size:12px;color:var(--ink-dim);text-align:center;}
+.mock-sidebar-row{display:flex;width:100%;gap:0;}
+.mock-sidebar{width:80px;background:var(--bg);border-right:1px solid var(--panel-border);padding:10px 6px;display:flex;flex-direction:column;gap:6px;}
+.mock-sidebar div{height:8px;border-radius:4px;background:var(--panel-2);}
+.mock-tabs{display:flex;gap:14px;padding:8px 16px;border-bottom:1px solid var(--panel-border);font-size:11px;color:var(--ink-faint);}
+.mock-tabs .on{color:var(--accent);font-weight:700;}
+
+/* === PROMPT DEMO === */
+.chat-panel{width:100%;max-width:640px;}
+.chat-msg{
+  margin-top:10px;padding:12px 16px;border-radius:12px;font-family:var(--font-mono);
+  font-size:12.5px;line-height:1.6;color:var(--ink);
+  background:var(--panel-2);border:1px solid var(--panel-border);
+  white-space:pre-wrap;animation:typeIn .4s ease both;
+}
+@keyframes typeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+.chat-msg.edit{border-color:var(--accent);}
+.chat-tag{font-family:var(--font-body);font-size:10.5px;color:var(--accent);font-weight:700;margin-bottom:6px;display:block;}
+.result-box{
+  margin-top:14px;width:100%;max-width:640px;padding:16px;border-radius:12px;
+  background:var(--panel);border:1px solid var(--panel-border);
+  display:flex;align-items:center;gap:12px;animation:typeIn .4s ease both;
+}
+.result-box .icon{font-size:26px;}
+.result-box .txt{font-size:12.5px;color:var(--ink-dim);}
+
+/* === COMPARE === */
+.compare-table{width:100%;border-collapse:separate;border-spacing:0;overflow:hidden;border-radius:var(--radius-md);border:1px solid var(--panel-border);}
+.compare-table th,.compare-table td{padding:12px 14px;font-size:12.5px;text-align:left;border-bottom:1px solid var(--panel-border);}
+.compare-table th{background:var(--panel-2);color:var(--ink-dim);font-size:11px;text-transform:uppercase;letter-spacing:.5px;}
+.compare-table td{background:var(--panel);color:var(--ink);line-height:1.5;}
+.compare-table tr:last-child td{border-bottom:none;}
+.compare-persona{display:flex;align-items:center;gap:8px;font-weight:700;}
+.bar-chart{width:100%;display:flex;flex-direction:column;gap:10px;margin-top:6px;}
+.bar-row{display:flex;align-items:center;gap:10px;}
+.bar-label{width:110px;font-size:12px;color:var(--ink-dim);display:flex;align-items:center;gap:6px;flex:0 0 auto;}
+.bar-track{flex:1;height:16px;background:var(--panel-2);border-radius:8px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:8px;transition:width .6s ease;display:flex;align-items:center;justify-content:flex-end;padding-right:8px;}
+.bar-fill span{font-size:10px;font-family:var(--font-mono);color:#0A0D16;font-weight:700;}
+.pull-quote{max-width:560px;text-align:center;font-family:var(--font-display);font-weight:900;font-size:clamp(18px,2.6vw,26px);color:var(--accent);padding:8px 0;}
+
+/* === ENDING === */
+.cta-row{display:flex;gap:22px;}
+.cta-icon{font-size:38px;animation:bounce 1.6s ease-in-out infinite;}
+.cta-icon:nth-child(2){animation-delay:.2s;} .cta-icon:nth-child(3){animation-delay:.4s;}
+@keyframes bounce{0%,100%{transform:translateY(0);}50%{transform:translateY(-10px);}}
+.next-ep{padding:20px 30px;display:flex;align-items:center;gap:16px;}
+.terminal-glyph{
+  width:56px;height:56px;border-radius:12px;background:#000;border:1px solid var(--accent);
+  display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);
+  color:var(--accent);font-size:20px;box-shadow:0 0 20px var(--accent);flex:0 0 auto;
+}
+.terminal-glyph::after{content:'▊';animation:blink 1s step-end infinite;}
+@keyframes blink{50%{opacity:0;}}
+.next-ep-meta div:first-child{font-size:11px;color:var(--ink-faint);font-family:var(--font-mono);}
+.next-ep-meta div:last-child{font-size:17px;font-weight:700;font-family:var(--font-display);}
+
+/* responsive */
+@media (max-width:720px){
+  .brand span{display:none;}
+  .stage{padding:16px 5vw 220px;}
+  .caption-bar{--cap-h:110px;}
+  .host-card{flex-direction:column;text-align:center;padding:20px;}
+  .persona-head{flex-direction:column;text-align:center;}
+  .nav-btn{width:38px;height:38px;font-size:18px;}
+  .bar-label{width:82px;font-size:11px;}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation-duration:0.001s !important;animation-iteration-count:1 !important;transition-duration:0.001s !important;}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="global-progress"><div class="global-progress-fill" id="globalFill"></div></div>
+  <header class="topbar">
+    <div class="brand">🥖 배불뚝이 코딩 <span>EP.04 · 전용 프로그램 설치 &amp; 3대 AI 팀원 비교</span></div>
+    <div class="act-dots" id="actDots"></div>
+  </header>
+  <div class="stage-wrap" id="stageWrap">
+    <div class="click-zone left" id="zoneLeft"></div>
+    <div class="click-zone right" id="zoneRight"></div>
+    <button class="nav-btn nav-prev" id="prevBtn" aria-label="이전">‹</button>
+    <div class="stage" id="stage"></div>
+    <button class="nav-btn nav-next" id="nextBtn" aria-label="다음">›</button>
+  </div>
+  <footer class="caption-bar">
+    <div class="caption-eyebrow" id="capEyebrow"></div>
+    <div class="caption-card">
+      <div class="caption-text" id="capText"></div>
+    </div>
+    <div class="caption-meta">
+      <div class="caption-progress"><div class="caption-progress-fill" id="capFill"></div></div>
+      <div class="caption-count" id="capCount"></div>
+    </div>
+  </footer>
+</div>
+<script>
+/* ============ PERSONAS ============ */
+const PERSONA = {
+  claude:{ name:'클로드', tag:'설명 잘하는 멘토형 파트너', icon:'🎓', accent:'#D97757' },
+  codex:{ name:'코덱스', tag:'신중한 안전파 개발자', icon:'🛡️', accent:'#2FBF8F' },
+  anti:{ name:'안티그래비티', tag:'스스로 일하는 미래형 직원', icon:'🚀', accent:'#5B8DEF' }
+};
+
+/* ============ ACTS DATA (대본 전문 — 문장 단위로 분할) ============ */
+const ACTS = [
+
+/* ---------- 0. HOOK ---------- */
+{
+  id:'hook', kind:'hook', accent:'#FFB648',
+  eyebrow:'HOOK · 0:00 – 0:07',
+  headline:'❌ 아직도 복붙으로 코딩하세요?<br><span class="hl">그거 절대 하지 마세요, 여러분만 손해입니다</span>',
+  lines:[
+    '결론부터 말씀드릴게요.',
+    '지금 크롬 켜서 AI한테 코드 받고, 복사해서 붙여넣고 계신 분, 그거 절대 하지 마세요.',
+    '여러분만 시간 손해 보는 겁니다.',
+    '다들 그게 진짜 바이브 코딩인 줄 아시죠?',
+    '아닙니다.',
+    "그건 사실 '체험판'에 불과해요.",
+    '진짜 만드는 사람들은 복붙 자체를 아예 안 합니다.',
+    '오늘 딱 3가지 프로그램만 내 컴퓨터에 설치하면, 복붙이라는 단어 자체가 사라집니다.',
+    '어떤 프로그램이 제일 똑똑한지, 지금 눈앞에서 직접 비교해드리겠습니다.'
+  ]
+},
+
+/* ---------- 1. TARGET (손실회피) ---------- */
+{
+  id:'target', kind:'target', accent:'#FF6B6B',
+  eyebrow:'TARGET · 0:07 – 0:30',
+  headline:'⚠️ 복붙 노동에 지친 바이브 코더<br><span class="hl">이 영상 안 보면 계속 그렇게 코딩합니다</span>',
+  lines:[
+    '지난 3편에서 설치 없는 브라우저 AI 툴 알려드렸더니 반응이 정말 뜨거웠으면 좋겠지만....아직 쪼렙입니다.',
+    '조금만 복잡해지면 코드 전체를 매번 복사해서 옮기는 일도 귀찮고 힘들죠,',
+    '그렇다고 아직은 우리가 개발자처럼 검은 화면에 무서운 영어 명령어 치는 건 너무 부담스러운 일이죠.',
+    '이 영상 지금 안 보고 넘기시면, 다음 프로젝트도 똑같이 복붙하면서 시간 낭비하실 겁니다.',
+    '오늘 영상은 딱 그런 분들을 위한 영상입니다.',
+    '오늘은 검은 창 같은 머리 아픈 거 다 치우고,',
+    '스마트폰에 앱 깔듯 내 컴퓨터에 AI 전용 프로그램 3개를 설치해서,',
+    '내 파일을 AI가 알아서 읽고 고치는 신세계를 보여드리겠습니다.'
+  ]
+},
+
+/* ---------- 2. GREETING ---------- */
+{
+  id:'greeting', kind:'greeting', accent:'#F4F1EA',
+  eyebrow:'GREETING · 0:30 – 0:45',
+  headline:'🙋 오늘의 가이드, 배불뚝이 코딩',
+  lines:[
+    '안녕하세요, 여러분의 AI 치트키, 배불뚝이 코딩입니다.',
+    '오늘도 누구나 알아듣게 쉽게, 그리고 정직하게 풀어드리겠습니다.',
+    '참고로 저희 집 강아지 송송이도 오늘 촬영 내내 옆에서 감독하고 있으니, 혹시 짖는 소리가 들려도 놀라지 마세요.'
+  ]
+},
+
+/* ---------- 3. ERA (PART1) ---------- */
+{
+  id:'era', kind:'era', accent:'#9AA1BA',
+  eyebrow:'PART 1 · 0:45 – 1:50',
+  headline:'🕰️ 시대가 바뀌었다 — 이제 개발자는 AI 팀과 일한다',
+  rows:[
+    { tag:'과거', desc:"혼자 문법 외우던 시대", icon:'📖', lines:[
+      '예전에는 개발자가 되려면 문법을 외우고, 코드를 한 줄 한 줄 직접 썼습니다.',
+      '오타하나에 쩜 하나에 심지어는 스페이스키 하나 때문에 왜 안 되나 붙잡고 있었던 기억이 있네요.'
+    ]},
+    { tag:'현재', desc:'이제는 AI 팀과 협업', icon:'🤝', lines:[
+      '근데 지금은 다릅니다.',
+      '개발자는 AI와 대화하면서 작업해요.',
+      '설명해주는 AI, 직접 만들어주는 AI, 같이 일해주는 AI까지.',
+      '마치 회사에 신입사원 세 명이 갑자기 들어온 느낌이에요.'
+    ]},
+    { tag:'비유', desc:'3편=푸드코트 / 4편=내 주방', icon:'🍳', lines:[
+      "3편 브라우저 방식을 '푸드코트'로 비유한다면, 오늘은 그 셰프를 내 주방으로 데려오는 것입니다.",
+      '내 파일을 직접 만지고, 결과물이 진짜 내 컴퓨터에 남습니다.'
+    ]},
+    { tag:'공통점', desc:"셋 다 '에이전트형'", icon:'🧩', lines:[
+      '오늘 3개 프로그램의 공통점.',
+      "내가 코드를 치는 게 아니라, 목적지만 말하면 알아서 파일 만들고 코드 쓰고 테스트까지 하는 'AI 팀원'들입니다."
+    ]}
+  ]
+},
+
+/* ---------- 4. ROSTER (PART2 intro) ---------- */
+{
+  id:'roster', kind:'roster', accent:'#FFB648',
+  eyebrow:'PART 2 · 1:50',
+  headline:'🛠️ 내 AI 팀원 3명 소개',
+  lines:[
+    '오늘 영입할 AI 팀원은 셋입니다.',
+    '캐릭터로 기억하세요.'
+  ]
+},
+
+/* ---------- 5. CLAUDE OVERVIEW ---------- */
+{
+  id:'claude-overview', kind:'feature', accent:'#D97757', persona:'claude',
+  eyebrow:'PART 2 · 클로드',
+  headline:'큰 작업 통째로 / 왜 안 되는지 사람처럼 설명',
+  bullets:[
+    { label:'장점', text:'데스크톱 앱의 Code 탭은 CLI와 똑같은 엔진을 그래픽 화면으로 제공 — 여러 작업을 동시에 관리하는 사이드바, 원하는 대로 배치하는 드래그앤드롭 패널, 내장 터미널과 파일 편집기까지 한 화면 안에 들어와 있습니다.' },
+    { label:'장점', text:'변경 내역을 좌우로 비교(diff)해서 보여주고, 내장 브라우저로 화면을 직접 띄워 클릭·폼 입력·스크린샷까지 스스로 검증합니다. 여러 파일에 걸친 리팩터링, 백엔드, 아키텍처 같은 큰 작업에 특히 강합니다.' },
+    { label:'추가 포인트', text:"복잡한 작업은 먼저 '계획(Plan) 모드'로 설계도를 보여주고 승인을 받은 뒤 실행하며, 잠들어 있는 동안에도 클라우드에서 정해진 작업을 대신 처리해주는 '루틴(Routines)' 기능도 함께 나왔습니다." },
+    { label:'추천 대상', text:'잔손질보다 큰 작업을 통째로 맡기고 싶은 사람 / 설명을 들으며 배우고 싶은 입문자' },
+    { label:'참고', text:'맥·윈도우에서 무료·Pro·Max·Team·Enterprise 플랜으로 이용 가능하며, 리눅스는 최근 우분투·데비안 대상으로 베타 지원이 막 시작됐습니다.' }
+  ],
+  lines:[
+    '첫 번째 팀원, 클로드 데스크탑입니다.',
+    '앤트로픽라는 회사에서 만든 AI 입니다.',
+    '출시되자마자 코딩계의 큰 격변을 일으켰습니다.',
+    '클로드를 사용하는 방법은 여러가지가 있는데, 저번에 말씀드린 웹에서 사용하는 방법이 있고, 오늘 말씀드리는 전용 프로그램에서 사용하는 방법, 다음 시간에는 CLI라는 환경에서 사용하는 방법이 있습니다.',
+    '또 그 이후에 IDE환경, 통합개발 환경에서 사용하는 방법도 나중에 다뤄보도록 하겠습니다.',
+    '클로드의 장점으로는 이런 것들이 있는데요',
+    '장점과 단점, 주요 내용들은 더보기 란에 있는 제 발표자료 아카이브에 가시면 다운로드 받으실수 있으니 다운로드 받으셔서 보시면 되고요',
+    '오늘은 실제 설치해서 사용하는 법을 보여드리도록 하겠습니다.'
+  ]
+},
+
+/* ---------- 6. CLAUDE INSTALL ---------- */
+{
+  id:'claude-install', kind:'install', accent:'#D97757', persona:'claude',
+  eyebrow:'PART 2 · 클로드 설치',
+  headline:'💻 클로드 데스크톱 설치하기',
+  steps:['검색 🔍','다운로드 ⬇️','설치 ⚙️','로그인 🔑','프로젝트 생성 📁'],
+  lines:[
+    '먼저 인터넷에서 다운로드를 받아야겠죠.',
+    '크롬을 여시고요.',
+    '여기서 잠깐!',
+    '인터넷을 사용하실 때는 크롬 브라우져를 사용하시는 것이 좋을 것 같습니다.',
+    '다양한 개발 환경을 위해서는 구글 크롬을 사용하실 것을 권장합니다.',
+    '크롬에서 클로드라고 한글로 입력하시면',
+    '이렇게 오렌지색 아이콘의 클로드 사이트가 나타납니다.',
+    '클로드 사이트에 들어가시면',
+    '로그인 하는 창이 나오는데 거기에서 데스크톱 앱 다운로드 버튼을 누르시면 다운로드가 가능합니다.',
+    '만일 이미 클로드에 로그인 하셨거나 사용을 하셨다면 왼쪽 하단 내 프로필이 있는 곳을 누르시면 앱 및 확장프로그램 받기 버튼을 누르시면 데스크톱 다운로드 버튼이 있습니다.',
+    '사용하는 컴퓨터가 맥이냐 윈도우냐에 따라서 버튼이 다르게 나타납니다.',
+    '다운로드가 완료 되면 크롬 왼쪽 상단에 다운로드 버튼이 나타납니다.',
+    '거기서 다운로드 받은 폴더로 이동하고, 더블클릭하면 클로드 데스크톱 설치가 시작됩니다.',
+    '클로드 데스크톱 시작하기를 누르면 로그인을 하라고 나옵니다.',
+    '클로드 데스크톱은 프로 이상 결제한 사용자만 사용이 가능합니다.',
+    '로그인이 완료되면 사용할 준비가 끝났습니다',
+    '마침 최근에 소넷 5가 발표되어 사용할 수 있다는 안내가 나오고 있네요',
+    '클로드에서 왼쪽 상단에 챗, 코워크, 코드 라는 턉들이 있는데',
+    '챗은 웹에서 클로드를 사용하는 것과 동일한 환경이고요',
+    '코워크는 나중에 다시 설명할 기회가 있으면 하겠습니다.',
+    '오늘은 코드에서 사용을 하는데요',
+    '채팅창 위에 보면 로컬이라고 되어 있고 폴더 선택이라고 되어 있습니다.',
+    '우리가 바이브 코딩을 시작하기 위해서는 항상 프로젝트를 생성을 하게 되는데요',
+    '한 프로젝트당 하나의 폴더를 생성 하시는 것이 좋습니다.',
+    '폴더를 선택하셔서 기존의 폴더를 선택하셔도 되고요.',
+    '새로운 폴더를 생성하면 됩니다.',
+    '배불코딩 이라는 폴더 안에 오늘 만들어볼 스케쥴이라는 폴더를 생성하겠습니다.',
+    '폴더를 선택하면 이 워크스페이스를 신뢰하겠습니까? 라고 묻는데요, 우리가 만든 폴더, 디렉토리라고도 하죠.',
+    '이곳에서 작업을 해야 하기 때문에 당연히 신뢰한다고 해야 합니다',
+    '항상 이 폴더를 확인하시고 실행하시면 되겠습니다.',
+    '폴더 선택이 끝나고 이제는 프롬프트를 입력해 보겠습니다.'
+  ]
+},
+
+/* ---------- 7. CLAUDE PROMPT DEMO ---------- */
+{
+  id:'claude-prompt', kind:'prompt', accent:'#D97757', persona:'claude',
+  eyebrow:'PART 2 · 클로드 실전 데모',
+  headline:'✨ 실전 데모: 스케줄러 앱 만들기',
+  promptBlocks:[
+    { showFrom:5, tag:'PROMPT', text:'내 스케쥴을 정리할 수 있는 스케쥴러를 만들거야, 화면에는 달력이 나오게 해주고, 오늘 날자를 항상 기본으로 보여줘야해, 기본 달력 오른쪽에는 오늘 날자를 길게 세로로 시간 단위로 보여주고, 시간별로 할일을 예정해 놓고 싶어, 그리고 예정된 일정이 실행되었다면 그 결과를 기록할 수 있는 칸도 만들어줘, 일단 내 로컬에서 돌아가는 HTML웹으로 만들어줘' },
+    { showFrom:9, tag:'수정 PROMPT', text:'오른쪽 일정의 구분에서 시간단위로 칸을 만들지 말고 하루의 시간을 전체 한 칸으로 보여주고 할일 등록 버튼을 만들어서 시간과 일정을 등록하게 만들어줘', edit:true },
+    { showFrom:17, tag:'RESULT', result:true, icon:'📄', text:'index.html 파일 생성 완료 — 더블클릭하면 브라우저에서 바로 실행됩니다.' }
+  ],
+  lines:[
+    '오늘은 스케쥴 관리를 하는 간단한 웹 사이트를 만들어 볼텐데요',
+    '이렇게 프롬프트를 넣어보겠습니다.',
+    'AI는 줄 바꾸지 않고 길게 얘기해도 다 알아듣기 때문에 줄을 바꿀 필요는 없지만, 우리가 보기 편하려면 줄을 바꿔서 입력해야 겠죠.',
+    '그럴때는 엔터키가 아니고 쉬프트키를 누른 상태에서 엔터를 누르면 줄을 바꿔서 입력할 수 있습니다.',
+    '이렇게 입력해 보겠습니다.',
+    '클로드가 열심히 일을 하기 시작합니다.',
+    '얼마 시간이 지난 후에 클로드가 자동으로 결과물을 옆에 창에서 보여줍니다.',
+    '그런데 제가 생각했던 기능을 잘못 입력한 것같아요 그래서 수정을 해보겠습니다.',
+    '채팅창에다 수정할 내용을 입력합니다.',
+    '그럼 또 열심히 일을 하기 시작합니다',
+    '처음 프롬프트일때보다 수정은 조금 더 빨리 완성이 됩니다.',
+    '확인 해 보시면 내가 원하는 데로 구현이 되었습니다.',
+    '이렇게 내가 원하는 것을 채팅창에 입력하면 클로드가 열심히 일을 해서 결과물을 보여줍니다.',
+    '원하는 대로 수정이 되었습니다.',
+    '일정을 등록하고, 그 일정이 실행되었는지에 대한 확인도 할 수 있도록 완성되었습니다.',
+    '이제 결과물을 폴더에 가서 확인해 보도록 하겠습니다.',
+    '내 프로젝트의 폴더에 들어가보면 index.html이라는 파일이 생성이 되었습니다.',
+    '더블클릭하시면 크롬이나 기본으로 설정된 브라우져에서 실행이 됩니다.',
+    '클로드에서 확인하는 것과 똑같은 결과를 확인 할 수 있죠.'
+  ]
+},
+
+/* ---------- 8. CODEX OVERVIEW ---------- */
+{
+  id:'codex-overview', kind:'feature', accent:'#2FBF8F', persona:'codex',
+  eyebrow:'PART 2 · 코덱스',
+  headline:'챗GPT가 만든 / 권한을 칼같이 챙기는 안전파',
+  bullets:[
+    { label:'장점', text:"프로젝트별로 스레드를 나눠 여러 작업을 동시에 병렬로 진행하고, 깃(Git) '워크트리' 기능이 기본 내장돼 있어서 같은 저장소에서 여러 에이전트가 서로 부딪히지 않고 각자 독립된 사본에서 작업합니다." },
+    { label:'장점', text:"OS 레벨 샌드박스로 'AI가 내 컴퓨터에서 건드릴 수 있는 범위'를 세밀하게 통제 — 기본은 지금 작업 중인 폴더 안에서만 편집하고, 인터넷 접속처럼 더 큰 권한이 필요하면 반드시 먼저 물어봅니다." },
+    { label:'추가 포인트', text:"'스킬(Skills)' 기능으로 코드 작성을 넘어 이미지 생성, 웹 게임 개발 같은 확장 작업도 가능하고, macOS·Windows 모두에서 '컴퓨터 사용(Computer Use)' 기능으로 화면을 직접 보고 클릭·타이핑까지 할 수 있습니다." },
+    { label:'추천 대상', text:'이미 챗GPT 유료를 써서 그 생태계로 묶고 싶은 사람 / AI에 권한 주는 게 불안해서 세밀한 통제를 원하는 사람' },
+    { label:'참고', text:'ChatGPT Plus·Pro·Business·Enterprise·Edu 플랜에 포함, API는 토큰당 별도 과금' }
+  ],
+  lines:[
+    '이제 두 번째 팀원, 코덱스를 살펴보겠습니다.',
+    '챗GPT 만든 오픈AI의 코딩 전용 도구예요.',
+    '원래 터미널 도구였는데, 오픈 Ai사에서 나온 챗 지피티를 코딩에 사용하는 것이라고 생각하면 쉬울 것 같습니다.',
+    '깃허브 코파일럿 처럼 다른 곳에서 에이전트형으로 사용되다가 이제는 전용 데스크톱 앱이 나왔습니다.',
+    '장점과 단점, 주요 내용들은 제 발표자료 아카이브에 가시면 다운로드 받으실수 있으니 다운로드 받으셔서 보시면 되고요',
+    '오늘은 실제 설치해서 사용하는 법을 보여드리도록 하겠습니다.'
+  ]
+},
+
+/* ---------- 9. CODEX INSTALL ---------- */
+{
+  id:'codex-install', kind:'install', accent:'#2FBF8F', persona:'codex',
+  eyebrow:'PART 2 · 코덱스 설치',
+  headline:'💻 코덱스 데스크톱 설치하기',
+  steps:['검색 🔍','다운로드 ⬇️','설치 ⚙️','로그인 🔑','프로젝트 생성 📁'],
+  lines:[
+    '먼저 인터넷에서 다운로드를 받아야겠죠.',
+    '크롬을 여시고요.',
+    '여기서 잠깐!',
+    '인터넷을 사용하실 때는 크롬 브라우져를 사용하시는 것이 좋을 것 같습니다.',
+    '크롬에서 코덱스라고 한글로 입력하시면 아래에 오픈 에이아이 사의 코덱스가 있습니다.',
+    '들어가시면 코덱스 데스크 톱을 다운로드 받을 수 있는 링크가 있습니다.',
+    '다운로드가 다 되면 오른쪽 상단에 다운로드 폴더를 누르시면 다운로드된 폴더로 이동합니다',
+    '다운로드 받은 파일을 더블클릭 하시면 다운로드 중이라고 나오면서 설치가 시작됩니다.',
+    '설치가 다 되면 자동으로 코덱스 데스크톱이 실행됩니다.',
+    '실행을 한 후에는 어떤 용도로 사용할 것인지 묻는데',
+    '각자에 상황에 맞게 설정 하시면 다음으로 넘어갑니다.',
+    '당연히 로그인을 해야 하는데,',
+    '코덱스 데스크톱을 사용하시려면 챗 지피티에 로그인을 해야 합니다.',
+    '챗 지피티 요금제에 가입이 되어 있어야 하고요.',
+    '챗 지피티 플러스 이상의 요금제를 이용하셔야 코덱스 데스크톱을 사용할 수 있습니다.',
+    '처음에 코덱스에서 바이브코딩을 시작하려면 프로젝트를 생성해야 합니다.',
+    '가운데 있는 채팅창에서 새로운 프로젝트를 생성합니다.',
+    '프로젝트 이름을 입력하고',
+    '다음을 누르면 자동으로 코덱스에서 지정한 폴더에서 프로젝트가 실행되는데',
+    '생성할때 기존 폴더 사용버튼을 누르면 내가 지정한 위치에 폴더를 만들고 프로젝트를 실행할 수 있습니다.',
+    '마찬가지로 채팅창 아래에 새 프로젝트에서도 만들수 있습니다.',
+    'Choose 프로젝트에서 New 프로젝트를 누른 후 기존 폴더를 누르면 새로운 폴더에서 프로젝트를 실행 할 수 있습니다.',
+    '폴더가 만들어지고 프로젝트가 선택되었다면 이제 입력창에 프롬프트를 입력 합니다.'
+  ]
+},
+
+/* ---------- 10. CODEX PROMPT DEMO ---------- */
+{
+  id:'codex-prompt', kind:'prompt', accent:'#2FBF8F', persona:'codex',
+  eyebrow:'PART 2 · 코덱스 실전 데모',
+  headline:'✨ 실전 데모: 코덱스로 만들어보기',
+  promptBlocks:[
+    { showFrom:0, tag:'PROMPT (클로드와 동일)', text:'내 스케쥴을 정리할 수 있는 스케쥴러를 만들거야 · (동일 프롬프트 재사용)' },
+    { showFrom:6, tag:'RESULT', result:true, icon:'📄', text:'결과 화면 확인 — 클로드와는 조금 다른 결과물이 나왔습니다.' },
+    { showFrom:8, tag:'수정 PROMPT (클로드와 동일)', text:'동일한 수정 프롬프트 재입력', edit:true }
+  ],
+  lines:[
+    '클로드에서 입력한 똑같은 프롬프트를 입력해 보도록 하겠습니다.',
+    '가끔 권한 어쩌고 하면서 결과가 잘 안나올때가 있는데',
+    '그럼 채팅창 왼쪽 아래에 승인 요청이라는 버튼을 누른 후에 전체 액세스를 누르시면 실행되고 파일 형성도 됩니다.',
+    '옆에 브라우져에 자동으로 떠야 하는데 안뜨고 있네요',
+    '링크를 복사해서 주소창에 넣어보겠습니다.',
+    '결과를 이렇게 확인 할 수 있습니다.',
+    '이번에도 처음 결과가 이렇게 나온 것으로 봐서 제가 프롬프트를 이상하게 입력했나 봅니다.',
+    '두번째 수정 프롬프트도 그대로 입력을 하면',
+    '수정을 해 주는데, 클로드랑은 조금 다른 결과물이 나왔습니다.',
+    '일정 등록하는 것도 확인해 보니 일정 등록이 되는데 결과를 입력한 것에 대한 별다른 반응은 없네요',
+    '이번에도 역시 폴더에 들어가서 확인을 해보면 index.html이 생성 된 것을 볼 수 있습니다.'
+  ]
+},
+
+/* ---------- 11. ANTIGRAVITY OVERVIEW ---------- */
+{
+  id:'anti-overview', kind:'feature', accent:'#5B8DEF', persona:'anti',
+  eyebrow:'PART 2 · 안티그래비티',
+  headline:'구글 신작 / 무료로 시작 가능 / AI가 직접 브라우저 띄워 테스트',
+  bullets:[
+    { label:'출시 및 개편', text:"2025년 11월 무료 프리뷰로 첫선을 보인 뒤, 2026년 5월 19일 구글 I/O에서 독립 데스크톱 앱, 자체 CLI, SDK까지 갖춘 'Antigravity 2.0'으로 전면 개편됐습니다. antigravity.google에서 맥·윈도우·리눅스용으로 내려받을 수 있습니다." },
+    { label:'모델 교체', text:'기본 모델이 제미나이 3.5 플래시로 바뀌었는데, 속도와 코딩 성능이 함께 개선됐다고 구글이 밝혔습니다.' },
+    { label:'킬러 기능', text:'진짜 크롬 브라우저를 직접 띄워 버튼을 눌러보고 폼을 채우고 스크린샷으로 확인 — 버튼이 안 되면 AI가 스스로 보고 고칩니다. 2.0부터는 여러 에이전트를 동시에 오케스트레이션하며 백그라운드로 작업을 예약해두는 것도 가능해졌습니다.' },
+    { label:'추천 대상', text:'우선 무료로 강력한 걸 체험해보고 싶은 사람 / 구글 시트·드라이브랑 엮어 쓰고 싶은 사람' },
+    { label:'주의', text:'개인 사용자는 여전히 무료로 시작할 수 있지만, 사용량이 많아지면 월 100달러대 유료 플랜으로 확장하는 구조라 "완전 무료"보다는 "부담 없이 무료로 시작 가능" 정도로 소개하는 게 정확합니다. 또 아직 기능이 빠르게 바뀌는 단계라 화면이 영상과 다를 수 있습니다.' }
+  ],
+  lines:[
+    '세 번째 팀원, 안티그래비티를 보겠습니다.',
+    '구글에서 나왔고요 최근에 업데이트 되면서, CLI버젼, IDE버전과 전용 프로그램 버전까지 동시에 나왔습니다.',
+    '역시 장 단점에 대해서는 아카이브 사이트에서 확인하실 수 있고요'
+  ]
+},
+
+/* ---------- 12. ANTIGRAVITY INSTALL ---------- */
+{
+  id:'anti-install', kind:'install', accent:'#5B8DEF', persona:'anti',
+  eyebrow:'PART 2 · 안티그래비티 설치',
+  headline:'💻 안티그래비티 설치하기',
+  steps:['검색 🔍','다운로드 ⬇️','설치 ⚙️','로그인 🔑','프로젝트 생성 📁'],
+  lines:[
+    '먼저 인터넷에서 다운로드를 받아야겠죠.',
+    '크롬을 여시고요.',
+    '크롬에서 안티그래비티라고 한글로 입력하시면 아래에 결과가 나옵니다.',
+    '들어가시면 안티그래비티 사이트가 나오는데요 상단에 프로덕츠라는 곳에 가면 안티그래비티를 이용할 수 있는 다양한 방법들이 나옵니다.',
+    '오늘 사용해볼것은 맨 위에 있는 안티 그래비티 2.0이고요 클릭 하시면 다운로드 받을 수 있는 페이지로 들어갑니다.',
+    '아래 CLI버전과 IDE버전은 다음번에 설명드리도록 하겠습니다.',
+    '다운로드 페이지에 들어가셔서 내 컴퓨터에 맞는 환경의 프로그램을 다운로드 받으시면 되고요.',
+    '다운로드를 다 받으시면 상단에 다운로드 상태창에서 폴더에 들어가셔서',
+    '다운로드 받은 파일을 더블클릭하면 설치가 시작됩니다',
+    '설치가 완료 된 이후에 실행 되는 데요',
+    '당연히 로그인을 해야 합니다.',
+    '안티그래비티를 사용하시려면 구글도 가입하셔야 하는데요',
+    '최소 AI Pro 이상을 구독하셔야 안티 그래비티를 사용하실 수 있습니다.',
+    '아직 구글 안티그래비티 전용 프로그램은 한글메뉴가 지원되지 않습니다.',
+    '영어 메뉴를 보셔야 하고요',
+    '안티그래비티도 마찬가지로 프로젝트를 생성해야 합니다.',
+    '가운데 있는 채팅창에서 새로운 프로젝트를 생성합니다.',
+    '프로젝트 이름을 입력하고',
+    '애드 폴더를 누르시면 폴더를 선택하거나 생성할 수 있습니다.',
+    '지정하거나 생성한 폴더에서 프로젝트가 실행되는데',
+    '보안 관련 어쩌구 저쩌구 나오는데 오늘은 일단 기본으로 하고 다음 버튼을 눌려서 진행하겠습니다.',
+    '프로젝트 이름을 설정하셔도 되고 그냥 넘어가셔도 됩니다.'
+  ]
+},
+
+/* ---------- 13. ANTIGRAVITY PROMPT DEMO ---------- */
+{
+  id:'anti-prompt', kind:'prompt', accent:'#5B8DEF', persona:'anti',
+  eyebrow:'PART 2 · 안티그래비티 실전 데모',
+  headline:'✨ 실전 데모: 안티그래비티로 만들어보기',
+  promptBlocks:[
+    { showFrom:0, tag:'PROMPT (클로드와 동일)', text:'내 스케쥴을 정리할 수 있는 스케쥴러를 만들거야 · (동일 프롬프트 재사용)' },
+    { showFrom:9, tag:'RESULT', result:true, icon:'🏆', text:'오늘 만든 세 개 중 가장 나은 결과물!' }
+  ],
+  lines:[
+    '클로드에서 입력한 똑같은 프롬프트를 입력해 보도록 하겠습니다.',
+    '열심히 일을 하다가 잠깐 멈추는데 이럴때 나오는 메시지를 잘 읽어 보시고 다음 명령을 내리시면 됩니다.',
+    '무슨 기획 문서를 만들었으니 검토해달라고 하는데요',
+    '영어로 문서를 만들었네요.',
+    '그래서 한글로 만들어 달라고 하니까',
+    '이렇게 이렇게 만들겠다는 계획인 듯합니다.',
+    '오늘은 일단 대충 읽고 그냥 실행해달라고 해보겠습니다.',
+    '안티그래비티는 자기가 알아서 자바스크립트도 만들고 스타일시트도 만들고 열일을 하고 있습니다.',
+    '열심히 일을 하더니 결과물이 나옵니다',
+    '작업 폴더에 가서 인덱스 파일을 더블클릭 해봅니다.',
+    '이번에도 처음 결과가 이렇게 나온 것으로 봐서 제가 프롬프트를 이상하게 입력했나 봅니다.',
+    '두번째 수정 프롬프트도 그대로 입력을 하면',
+    '수정을 해 주는데, 클로드와 코덱스랑은 또 다른 결과물이 나왔습니다.',
+    '오늘 만든 세개 중에 그래도 제일 나은 결과물이 나온 것 같네요',
+    '오늘 만든 간단한 스케줄러는 제 발표 아카이브에 가시면 결과물을 보실 수 있습니다.'
+  ]
+},
+
+/* ---------- 14. COMPARE (PART4) ---------- */
+{
+  id:'compare', kind:'compare', accent:'#FFB648',
+  eyebrow:'PART 4 · 10:10 – 11:10',
+  headline:'📊 세 팀원 한눈 비교 + 브라우저와의 결정적 차이',
+  table:{
+    cols:['AI 팀원','캐릭터','인상적이었던 점','비용'],
+    rows:[
+      ['codex','신중한 안전파','작업 전 권한을 칼같이 확인, 워크트리로 병렬 작업 정리','ChatGPT Plus 플랜 이상 필요'],
+      ['claude','설명 잘하는 멘토','계획부터 보여주고, 멀티 세션·큰 작업에 강함','Pro 플랜 이상 필요'],
+      ['anti','미래형 자율 직원','직접 브라우저 띄워 자가 테스트, 여러 에이전트 동시 오케스트레이션','Ai Pro 플랜 이상 필요']
+    ]
+  },
+  lines:[
+    '3편 브라우저 방식과 오늘 방식의 결정적 차이는 딱 하나입니다.',
+    "'내 컴퓨터 파일을 AI가 직접 만질 수 있느냐'입니다.",
+    '브라우저에선 AI가 준 코드를 매번 복사해서 내 컴퓨터에 붙여넣어야 했죠.',
+    '파일이 10개, 20개 늘면 사람이 지쳐서 포기하게 됩니다.',
+    '근데 전용 프로그램은 AI가 내 폴더 전체를 양손에 쥐고 요리하기 때문에, 우리는 가만히 앉아 지시만 하면 됩니다.',
+    '유료사용이라는 큰 장벽이 있긴 하지만 한달에 4~5일만 커피 안 마신다고 생각하시고 유료 결제를 해보시면 신세계를 경험하실 수 있으실 겁니다.'
+  ]
+},
+
+/* ---------- 15. ENDING ---------- */
+{
+  id:'ending', kind:'ending', accent:'#FFB648',
+  eyebrow:'ENDING · 11:10 – 12:00',
+  headline:'🏁 다음 편 예고: CLI 바이브 코딩',
+  lines:[
+    '브라우저라는 좁은 감옥을 벗어나 내 컴퓨터에 AI 팀을 들이니까, 코딩 속도와 자유도가 수십 배 뛰는 게 느껴지시죠?',
+    '이제 여러분 컴퓨터는 단순한 모니터가 아니라 AI 개발 기지가 된 겁니다.',
+    '핵심은 하나예요.',
+    "이제 코딩은 '문법 암기'가 아니라, AI 팀한테 방향을 정해주는 감독의 일입니다.",
+    '이렇게 눈에 보이는 전용 앱을 정중히 마스터했으니, 딱 하나 남았습니다.',
+    "이 프로그램들과 AI를 빛의 속도로 연결하는 진짜 프로들의 치트키, 바로 그 무서운 '검은 창', CLI예요.",
+    "다음 5편에서는 는 CLI 바이브 코딩'으로 돌아오겠습니다.",
+    '의외로 이게 더 빠르고 강력한 순간이 있거든요.',
+    '오늘 내용이 도움이 되셨다면 지금 구독·좋아요·알림 설정까지 눌러주시고 다음 편에서 만나요.',
+    '지금까지 배불뚝이 코딩이었습니다.',
+    '감사합니다!'
+  ]
+}
+
+];
+
+/* flatten era rows into lines + rowMap */
+(function(){
+  const era = ACTS.find(a=>a.id==='era');
+  era.lines = []; era.rowMap = [];
+  era.rows.forEach((r,ri)=>{ r.lines.forEach(l=>{ era.lines.push(l); era.rowMap.push(ri); }); });
+})();
+</script>
+<script>
+/* ============ HELPERS ============ */
+function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function personaGlyphHTML(key, size){
+  const p = PERSONA[key];
+  size = size || 52;
+  return `<div class="persona-glyph" style="width:${size}px;height:${size}px;font-size:${Math.round(size*0.46)}px;background:color-mix(in srgb, ${p.accent} 22%, var(--panel));color:${p.accent};border:1px solid ${p.accent};">${p.icon}</div>`;
+}
+
+/* ============ STAGE BUILDERS ============ */
+function buildHook(act){
+  return `
+    <div class="eyebrow-badge">🚫 STOP DOING THIS</div>
+    <h1 class="headline">${act.headline}</h1>
+    <div class="hook-diagram">
+      <div class="browser-cluster">
+        ${[0,1,2,3,4].map(i=>`<div class="tab-chip" style="--d:${i}">🌐</div>`).join('')}
+        <div class="big-x pulse">❌</div>
+      </div>
+      <div class="diagram-arrow">➡️</div>
+      <div class="app-cluster">
+        <div class="app-glyph claude float" style="animation-delay:.1s">🎓</div>
+        <div class="app-glyph codex float" style="animation-delay:.3s">🛡️</div>
+        <div class="app-glyph anti float" style="animation-delay:.5s">🚀</div>
+      </div>
+    </div>
+    <div class="chip">⏱ 오늘 딱 3가지만 설치하면 끝</div>`;
+}
+
+function buildTarget(act){
+  const words = ['복붙…','복붙…','Ctrl+C','Ctrl+V','또 복붙…','시간 낭비'];
+  return `
+    <div class="eyebrow-badge" style="color:var(--danger);border-color:var(--danger);background:rgba(255,107,107,.12)">⚠️ WARNING</div>
+    <h1 class="headline">${act.headline}</h1>
+    <div class="warn-icon pulse">🥴</div>
+    <div class="tag-cloud">${words.map((w,i)=>`<span style="animation-delay:${i*.15}s">${w}</span>`).join('')}</div>`;
+}
+
+function buildGreeting(act){
+  return `
+    <div class="eyebrow-badge">HELLO 👋</div>
+    <h1 class="headline">${act.headline}</h1>
+    <div class="panel host-card" style="position:relative;">
+      <div class="host-avatar">💻</div>
+      <div class="host-meta">
+        <h3>배불뚝이 코딩</h3>
+        <p>쉽고 정직한 바이브 코딩 가이드</p>
+      </div>
+      <div class="dog-badge"><span class="paw">🐾</span> 송송이 감독 중</div>
+    </div>`;
+}
+
+function buildEra(act, li){
+  const ri = act.rowMap[li];
+  const fillPct = (ri/(act.rows.length-1))*100;
+  const row = act.rows[ri];
+  return `
+    <div class="eyebrow-badge">⏳ TIMELINE</div>
+    <h1 class="headline" style="font-size:clamp(18px,2.6vw,28px)">${act.headline}</h1>
+    <div class="era-timeline">
+      <div class="era-track">
+        <div class="era-line"></div>
+        <div class="era-line-fill" style="width:calc(${fillPct}% * (100% - 60px) / 100%)"></div>
+        ${act.rows.map((r,i)=>`
+          <div class="era-stop ${i===ri?'active':(i<ri?'past':'')}">
+            <div class="era-dot">${r.icon}</div>
+            <div class="era-label">${r.desc}</div>
+          </div>`).join('')}
+      </div>
+      <div class="panel era-tagbox">
+        <div class="tag">${row.tag}</div>
+        <div class="desc">${row.desc}</div>
+      </div>
+    </div>`;
+}
+
+function buildRoster(act){
+  const order = ['codex','claude','anti'];
+  return `
+    <div class="eyebrow-badge">TEAM ROSTER</div>
+    <h1 class="headline">${act.headline}</h1>
+    <div class="roster-row">
+      ${order.map((k,i)=>{ const p=PERSONA[k]; return `
+        <div class="panel roster-card" style="border-color:${p.accent}55;">
+          <div class="roster-num">0${i+1}</div>
+          <div class="roster-glyph" style="background:color-mix(in srgb, ${p.accent} 22%, var(--panel));color:${p.accent};border:1px solid ${p.accent};">${p.icon}</div>
+          <h4>${p.name}</h4>
+          <p>${p.tag}</p>
+        </div>`; }).join('')}
+    </div>`;
+}
+
+function buildFeature(act){
+  const p = PERSONA[act.persona];
+  return `
+    <div class="eyebrow-badge">${p.name.toUpperCase()} FILE</div>
+    <div class="persona-head">
+      ${personaGlyphHTML(act.persona,52)}
+      <div>
+        <div class="persona-name" style="color:${p.accent}">${p.name}</div>
+        <div class="persona-tag">${p.tag}</div>
+      </div>
+    </div>
+    <h1 class="headline" style="font-size:clamp(16px,2.2vw,22px);color:var(--ink-dim)">${act.headline}</h1>
+    <div class="bullet-grid">
+      ${act.bullets.map(b=>`
+        <div class="panel bullet-card" style="border-color:${p.accent}33;">
+          <div class="bullet-label" style="color:${p.accent}">${b.label}</div>
+          <div class="bullet-text">${esc(b.text)}</div>
+        </div>`).join('')}
+    </div>`;
+}
+
+function buildInstall(act, li){
+  const p = PERSONA[act.persona];
+  const pct = li/(act.lines.length-1);
+  const stepIdx = Math.min(act.steps.length-1, Math.floor(pct*act.steps.length));
+  const isApp = pct > 0.32;
+  return `
+    <div class="eyebrow-badge">${p.name.toUpperCase()} INSTALL</div>
+    <div class="persona-head">
+      ${personaGlyphHTML(act.persona,40)}
+      <div class="persona-name" style="font-size:18px;color:${p.accent}">${act.headline}</div>
+    </div>
+    <div class="step-pills">
+      ${act.steps.map((s,i)=>`<div class="step-pill ${i===stepIdx?'active':''}" style="${i===stepIdx?`background:${p.accent};border-color:${p.accent}`:''}">${s}</div>`).join('')}
+    </div>
+    <div class="mock-window">
+      ${isApp ? `
+        <div class="mock-titlebar"><div class="mock-dot"></div><div class="mock-dot"></div><div class="mock-dot"></div>
+          <div class="mock-addr">🖥 ${p.name} Desktop</div></div>
+        <div class="mock-tabs"><span>챗</span><span>코워크</span><span class="on" style="color:${p.accent}">코드</span></div>
+        <div class="mock-sidebar-row">
+          <div class="mock-sidebar">${[0,1,2,3].map(()=>`<div></div>`).join('')}</div>
+          <div class="mock-body" style="flex:1;">
+            <div class="big-emoji">📁</div>
+            <div class="mock-note">프로젝트 폴더 연결 · 프롬프트 입력 대기 중</div>
+          </div>
+        </div>` : `
+        <div class="mock-titlebar"><div class="mock-dot"></div><div class="mock-dot"></div><div class="mock-dot"></div>
+          <div class="mock-addr">🔍 chrome — "${p.name}" 검색</div></div>
+        <div class="mock-body">
+          <div class="big-emoji">⬇️</div>
+          <div class="mock-note">공식 사이트에서 데스크톱 앱 다운로드 중…</div>
+        </div>`}
+    </div>`;
+}
+
+function buildPrompt(act, li){
+  const p = PERSONA[act.persona];
+  const blocks = act.promptBlocks.filter(b=>li>=b.showFrom);
+  return `
+    <div class="eyebrow-badge">${p.name.toUpperCase()} DEMO</div>
+    <div class="persona-head">
+      ${personaGlyphHTML(act.persona,40)}
+      <div class="persona-name" style="font-size:18px;color:${p.accent}">${act.headline}</div>
+    </div>
+    <div class="chat-panel">
+      ${blocks.map(b=>{
+        if(b.result){
+          return `<div class="result-box" style="border-color:${p.accent}55;"><div class="icon">${b.icon}</div><div class="txt">${esc(b.text)}</div></div>`;
+        }
+        return `<div class="chat-msg ${b.edit?'edit':''}" style="${b.edit?`border-color:${p.accent}`:''}">
+          <span class="chat-tag" style="color:${p.accent}">${b.tag}</span>${esc(b.text)}</div>`;
+      }).join('')}
+      ${blocks.length===0 ? `<div class="mock-note" style="text-align:center;margin-top:20px;">💬 프롬프트 입력 대기 중…</div>` : ''}
+    </div>`;
+}
+
+function buildCompare(act, li){
+  const showQuote = li===1;
+  return `
+    <div class="eyebrow-badge">FINAL COMPARE</div>
+    <h1 class="headline" style="font-size:clamp(17px,2.4vw,24px)">${act.headline}</h1>
+    <table class="compare-table">
+      <thead><tr>${act.table.cols.map(c=>`<th>${c}</th>`).join('')}</tr></thead>
+      <tbody>
+        ${act.table.rows.map(r=>{ const p=PERSONA[r[0]]; return `
+          <tr>
+            <td class="compare-persona" style="color:${p.accent}">${p.icon} ${p.name}</td>
+            <td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td>
+          </tr>`; }).join('')}
+      </tbody>
+    </table>
+    ${showQuote ? `<div class="pull-quote">"내 컴퓨터 파일을 AI가 직접 만질 수 있느냐"</div>` : ''}`;
+}
+
+function buildEnding(act){
+  return `
+    <div class="eyebrow-badge">SEE YOU NEXT TIME</div>
+    <h1 class="headline">${act.headline}</h1>
+    <div class="cta-row">
+      <div class="cta-icon">🔔</div><div class="cta-icon">👍</div><div class="cta-icon">📢</div>
+    </div>
+    <div class="panel next-ep">
+      <div class="terminal-glyph">&gt;_</div>
+      <div class="next-ep-meta">
+        <div>NEXT · EP.05</div>
+        <div>CLI 바이브 코딩</div>
+      </div>
+    </div>`;
+}
+
+function buildStage(act, li){
+  switch(act.kind){
+    case 'hook': return buildHook(act);
+    case 'target': return buildTarget(act);
+    case 'greeting': return buildGreeting(act);
+    case 'era': return buildEra(act, li);
+    case 'roster': return buildRoster(act);
+    case 'feature': return buildFeature(act);
+    case 'install': return buildInstall(act, li);
+    case 'prompt': return buildPrompt(act, li);
+    case 'compare': return buildCompare(act, li);
+    case 'ending': return buildEnding(act);
+    default: return '';
+  }
+}
+
+/* ============ STATE & RENDER ============ */
+let actIdx = 0, lineIdx = 0;
+const totalLines = ACTS.reduce((s,a)=>s+a.lines.length,0);
+
+const stageEl = document.getElementById('stage');
+const capEyebrow = document.getElementById('capEyebrow');
+const capText = document.getElementById('capText');
+const capFill = document.getElementById('capFill');
+const capCount = document.getElementById('capCount');
+const globalFill = document.getElementById('globalFill');
+const actDotsEl = document.getElementById('actDots');
+
+function buildDots(){
+  actDotsEl.innerHTML = ACTS.map((a,i)=>`<div class="act-dot" data-i="${i}" title="${a.eyebrow}" style="--accent-dot:${a.accent}"></div>`).join('');
+  [...actDotsEl.children].forEach(d=>d.addEventListener('click', ()=>{ actIdx = +d.dataset.i; lineIdx = 0; render(true); }));
+}
+
+function linesBefore(idx){ let s=0; for(let i=0;i<idx;i++) s+=ACTS[i].lines.length; return s; }
+
+/* 라인이 바뀔 때마다 시각 요소가 반응해야 하는 씬 종류 (그 외에는 씬 진입시 한 번만 렌더링) */
+const DYNAMIC_KINDS = new Set(['era','install','prompt','compare']);
+
+function render(stageChanged){
+  const act = ACTS[actIdx];
+  document.documentElement.style.setProperty('--accent', act.accent);
+  const needsVisualUpdate = stageChanged || DYNAMIC_KINDS.has(act.kind);
+  if(needsVisualUpdate){
+    if(stageChanged){
+      stageEl.innerHTML = `<div class="stage-inner" style="--accent:${act.accent}">${buildStage(act, lineIdx)}</div>`;
+    } else {
+      const inner = stageEl.querySelector('.stage-inner');
+      inner.innerHTML = buildStage(act, lineIdx);
+    }
+  }
+  capEyebrow.textContent = act.eyebrow;
+  capText.textContent = act.lines[lineIdx];
+  capText.classList.remove('enter'); void capText.offsetWidth; capText.classList.add('enter');
+  capFill.style.width = ((lineIdx+1)/act.lines.length*100)+'%';
+  capCount.textContent = (lineIdx+1)+' / '+act.lines.length;
+  const doneGlobal = linesBefore(actIdx)+lineIdx+1;
+  globalFill.style.width = (doneGlobal/totalLines*100)+'%';
+  [...actDotsEl.children].forEach((d,i)=>{
+    d.classList.toggle('active', i===actIdx);
+    d.classList.toggle('done', i<actIdx);
+  });
+}
+
+function next(){
+  const act = ACTS[actIdx];
+  if(lineIdx < act.lines.length-1){ lineIdx++; render(false); }
+  else if(actIdx < ACTS.length-1){ actIdx++; lineIdx=0; render(true); }
+}
+function prev(){
+  if(lineIdx>0){ lineIdx--; render(false); }
+  else if(actIdx>0){ actIdx--; lineIdx=ACTS[actIdx].lines.length-1; render(true); }
+}
+
+document.getElementById('nextBtn').addEventListener('click', next);
+document.getElementById('prevBtn').addEventListener('click', prev);
+document.getElementById('zoneLeft').addEventListener('click', prev);
+document.getElementById('zoneRight').addEventListener('click', next);
+window.addEventListener('keydown', (e)=>{
+  if(['ArrowRight',' ','PageDown'].includes(e.key)){ e.preventDefault(); next(); }
+  else if(['ArrowLeft','PageUp'].includes(e.key)){ e.preventDefault(); prev(); }
+});
+
+buildDots();
+render(true);
+</script>
+</body>
+</html>
